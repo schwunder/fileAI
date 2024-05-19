@@ -1,68 +1,32 @@
+import { pipe } from "./utilsFrontend.js";
+
 export function createGridItem(imageUrl, imageObjectURL) {
-  const gridItem = document.createElement("div");
-  gridItem.classList.add("grid-item");
-
-  const imageName = document.createElement("p");
-  imageName.textContent = imageUrl.split("/").pop();
-  gridItem.appendChild(imageName);
-
-  const buttonElement = document.createElement("button");
-  const imgElement = document.createElement("img");
-  imgElement.src = imageObjectURL;
-  buttonElement.appendChild(imgElement);
-  buttonElement.onclick = () => processImage(imageUrl);
-  gridItem.appendChild(buttonElement);
-
-  const jsonDataElement = document.createElement("div");
-  jsonDataElement.classList.add("json-data");
-  gridItem.appendChild(jsonDataElement);
-
-  return gridItem;
+  return pipe(null, [
+    () => createElementWithClass("div", "grid-item"),
+    (gridItem) => {
+      const imageName = createElementWithText("p", extractFileName(imageUrl));
+      gridItem.appendChild(imageName);
+      return gridItem;
+    },
+    (gridItem) => {
+      const buttonElement = createButtonWithImage(imageObjectURL, () =>
+        processImage(imageUrl)
+      );
+      gridItem.appendChild(buttonElement);
+      return gridItem;
+    },
+    (gridItem) => {
+      const jsonDataElement = createElementWithClass("div", "json-data");
+      gridItem.appendChild(jsonDataElement);
+      return gridItem;
+    },
+  ]);
 }
-
 export function updateGridItemWithJsonData(gridItem, jsonData) {
   const jsonDataElement = gridItem.querySelector(".json-data");
-  jsonDataElement.innerHTML = `
-    <span>Title:</span><span class="title" contenteditable="true">${
-      jsonData[0].title
-    }</span>
-    <span>Tags:</span><span class="tags">${jsonData[0].tags
-      .map((tag) => `<button class="tag-button">${tag}</button>`)
-      .join("")}</span>
-    <span>Description:</span><span class="description">${
-      jsonData[0].description
-    }</span>
-    <div class="action-buttons">
-      <button class="write-button">Write</button>
-      <button class="retry-button">Retry</button>
-      <button class="discard-button">Discard</button>
-    </div>
-  `;
+  jsonDataElement.innerHTML = generateJsonDataHtml(jsonData[0]);
 
-  // Add event listeners for tag buttons
-  const tagButtons = jsonDataElement.querySelectorAll(".tag-button");
-  tagButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      button.classList.toggle("selected");
-    });
-  });
-
-  // Add event listeners for action buttons
-  jsonDataElement
-    .querySelector(".write-button")
-    .addEventListener("click", () => {
-      console.log("Write button clicked");
-    });
-  jsonDataElement
-    .querySelector(".retry-button")
-    .addEventListener("click", () => {
-      console.log("Retry button clicked");
-    });
-  jsonDataElement
-    .querySelector(".discard-button")
-    .addEventListener("click", () => {
-      console.log("Discard button clicked");
-    });
+  addEventListeners(jsonDataElement);
 }
 
 async function processImage(imageUrl) {
@@ -78,4 +42,71 @@ async function processImage(imageUrl) {
   } catch (error) {
     console.error("Error processing image:", error);
   }
+}
+
+// Helper Functions
+function createElementWithClass(tag, className) {
+  const element = document.createElement(tag);
+  element.classList.add(className);
+  return element;
+}
+
+function createElementWithText(tag, text) {
+  const element = document.createElement(tag);
+  element.textContent = text;
+  return element;
+}
+
+function createButtonWithImage(imageSrc, onClick) {
+  const button = document.createElement("button");
+  const img = document.createElement("img");
+  img.src = imageSrc;
+  button.appendChild(img);
+  button.onclick = onClick;
+  return button;
+}
+
+function extractFileName(url) {
+  return url.split("/").pop();
+}
+
+function generateJsonDataHtml(data) {
+  return `
+    <span>Title:</span><span class="title" contenteditable="true">${
+      data.title
+    }</span>
+    <span>Tags:</span><span class="tags">${data.tags
+      .map((tag) => `<button class="tag-button">${tag}</button>`)
+      .join("")}</span>
+    <span>Description:</span><span class="description">${
+      data.description
+    }</span>
+    <div class="action-buttons">
+      <button class="write-button">Write</button>
+      <button class="retry-button">Retry</button>
+      <button class="discard-button">Discard</button>
+    </div>
+  `;
+}
+
+function addEventListeners(jsonDataElement) {
+  jsonDataElement.querySelectorAll(".tag-button").forEach((button) => {
+    button.addEventListener("click", () => button.classList.toggle("selected"));
+  });
+
+  jsonDataElement
+    .querySelector(".write-button")
+    .addEventListener("click", () => {
+      console.log("Write button clicked");
+    });
+  jsonDataElement
+    .querySelector(".retry-button")
+    .addEventListener("click", () => {
+      console.log("Retry button clicked");
+    });
+  jsonDataElement
+    .querySelector(".discard-button")
+    .addEventListener("click", () => {
+      console.log("Discard button clicked");
+    });
 }
