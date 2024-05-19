@@ -19,7 +19,7 @@ const server = Bun.serve({
     const { method, url, headers } = request;
     console.log("Received request:", { method, url, headers });
 
-    const url2 = new URL(request.url);
+    const requestUrl = new URL(request.url);
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -30,35 +30,35 @@ const server = Bun.serve({
       return handleOptions(corsHeaders);
     }
 
-    if (url2.pathname === "/styles.css") {
+    if (requestUrl.pathname === "/styles.css") {
       return handleStyles(corsHeaders);
     }
 
-    if (url2.pathname === "/script.js") {
+    if (requestUrl.pathname === "/script.js") {
       return handleScript(corsHeaders);
     }
 
-    if (url2.pathname === "/testImages") {
+    if (requestUrl.pathname === "/testImages") {
       return handleImageRoutes(corsHeaders);
     }
 
-    if (url2.pathname.startsWith("/testImages/")) {
-      return handleImageFile(url2, corsHeaders);
+    if (requestUrl.pathname.startsWith("/testImages/")) {
+      return handleImageFile(requestUrl, corsHeaders);
     }
 
-    if (url2.pathname === "/db") {
-      return handleJsonFile(url2, corsHeaders);
+    if (requestUrl.pathname === "/db") {
+      return handleJsonFile(requestUrl, corsHeaders);
     }
 
-    if (url2.pathname === "/processImage" && method === "POST") {
+    if (requestUrl.pathname === "/processImage" && method === "POST") {
       return handleProcessImage(request, corsHeaders);
     }
 
     if (
-      url2.pathname.startsWith("/db/testImages/") &&
-      url2.pathname.endsWith(".json")
+      requestUrl.pathname.startsWith("/db/testImages/") &&
+      requestUrl.pathname.endsWith(".json")
     ) {
-      const filePath = `.${url2.pathname}`;
+      const filePath = `.${requestUrl.pathname}`;
       console.log("Handling request for:", filePath);
       try {
         const file = await Bun.file(filePath).text();
@@ -80,7 +80,7 @@ const server = Bun.serve({
       return new Response(`Welcome to Bun! ${body}`, { headers: corsHeaders });
     }
 
-    if (url2.pathname === "/" || url2.pathname === "/index.html") {
+    if (requestUrl.pathname === "/" || requestUrl.pathname === "/index.html") {
       console.log("Handling / or /index.html request");
       try {
         const file = await Bun.file("index.html").text();

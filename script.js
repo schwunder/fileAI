@@ -1,3 +1,5 @@
+console.log("Script loaded"); // Check if the script is loaded
+
 document.addEventListener("DOMContentLoaded", (event) => {
   console.log("DOM fully loaded and parsed"); // Check if DOMContentLoaded event is fired
 
