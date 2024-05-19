@@ -1,14 +1,21 @@
-import { handleStyles, handleScript, handleOptions } from "./routes/static";
-import { handleImageRoutes, handleImageFile } from "./routes/images";
-import { handleJsonFile } from "./routes/json";
-import { handleProcessImage } from "./routes/methods";
-import { getTestImages } from "./utils";
+import { readdirSync } from "fs";
+import processImage from "./processImage"; // Make sure to import the processImage function
+
+function getTestImages() {
+  const images = readdirSync("./testImages").map(
+    (file) => `/testImages/${file}`
+  );
+  console.log("Fetched test images:", images);
+  return images;
+}
 
 const server = Bun.serve({
   port: 3000,
   async fetch(request) {
-    const { method, url } = request;
-    const requestUrl = new URL(url);
+    const { method, url, headers } = request;
+    console.log("Received request:", { method, url, headers });
+
+    const url2 = new URL(request.url);
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -16,37 +23,119 @@ const server = Bun.serve({
     };
 
     if (method === "OPTIONS") {
-      return handleOptions(corsHeaders);
+      console.log("Handling OPTIONS request");
+      return new Response(null, { headers: corsHeaders });
     }
 
-    if (requestUrl.pathname === "/styles.css") {
-      return handleStyles(corsHeaders);
+    if (url2.pathname === "/styles.css") {
+      console.log("Handling /styles.css request");
+      try {
+        const file = await Bun.file("styles.css").text();
+        return new Response(file, {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "text/css",
+          },
+        });
+      } catch (error) {
+        console.error("Error fetching styles.css:", error);
+        return new Response("File not found", {
+          status: 404,
+          headers: corsHeaders,
+        });
+      }
     }
 
-    if (requestUrl.pathname === "/script.js") {
-      return handleScript(corsHeaders);
+    if (url2.pathname === "/testImages") {
+      console.log("Handling /testImages request");
+      const images = getTestImages();
+      return new Response(JSON.stringify(images), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    if (requestUrl.pathname === "/testImages") {
-      return handleImageRoutes(corsHeaders);
+    if (url2.pathname.startsWith("/testImages/")) {
+      const filePath = `.${url2.pathname}`;
+      console.log("Handling image request for:", filePath);
+      try {
+        const file = await Bun.file(filePath).arrayBuffer();
+        return new Response(file, {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "image/png",
+          },
+        });
+      } catch (error) {
+        console.error("Error fetching file:", error);
+        return new Response("File not found", {
+          status: 404,
+          headers: corsHeaders,
+        });
+      }
     }
 
-    if (requestUrl.pathname.startsWith("/testImages/") && method === "GET") {
-      return handleImageFile(requestUrl, corsHeaders);
+    if (url2.pathname === "/db") {
+      console.log("Handling /db request");
+      const file = await Bun.file("db/db.json").text();
+      return new Response(file, { headers: corsHeaders });
     }
 
-    if (requestUrl.pathname === "/processImage" && method === "POST") {
-      return handleProcessImage(request, corsHeaders);
+    if (url2.pathname === "/processImage" && method === "POST") {
+      const { imgPath } = await request.json();
+      console.log("Processing image:", imgPath);
+      await processImage(imgPath);
+      return new Response("Image processed successfully", {
+        headers: corsHeaders,
+      });
     }
 
     if (
-      requestUrl.pathname.startsWith("/db/testImages/") &&
-      requestUrl.pathname.endsWith(".json")
+      url2.pathname.startsWith("/db/testImages/") &&
+      url2.pathname.endsWith(".json")
     ) {
-      return handleJsonFile(requestUrl, corsHeaders);
+      const filePath = `.${url2.pathname}`;
+      console.log("Handling request for:", filePath);
+      try {
+        const file = await Bun.file(filePath).text();
+        return new Response(file, {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch (error) {
+        console.error("Error fetching file:", error);
+        return new Response("File not found", {
+          status: 404,
+          headers: corsHeaders,
+        });
+      }
     }
 
-    return new Response("Not Found", { status: 404, headers: corsHeaders });
+    if (method === "POST") {
+      const body = await request.json();
+      console.log("Handling POST request with body:", body);
+      return new Response(`Welcome to Bun! ${body}`, { headers: corsHeaders });
+    }
+
+    if (url2.pathname === "/" || url2.pathname === "/index.html") {
+      console.log("Handling / or /index.html request");
+      try {
+        const file = await Bun.file("index.html").text();
+        return new Response(file, {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "text/html",
+          },
+        });
+      } catch (error) {
+        console.error("Error fetching index.html:", error);
+        return new Response("File not found", {
+          status: 404,
+          headers: corsHeaders,
+        });
+      }
+    }
+
+    console.log("Unhandled request");
+    return new Response("no post", { headers: corsHeaders });
   },
 });
 
