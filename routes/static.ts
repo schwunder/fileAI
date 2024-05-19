@@ -74,6 +74,25 @@ export async function handleScriptFetch(
   }
 }
 
+export async function handleScriptUtils(
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    const file = await Bun.file("utilsFrontend.js").text();
+    return new Response(file, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/javascript",
+      },
+    });
+  } catch (error) {
+    return new Response("Error fetching utils.js: File not found", {
+      status: 404,
+      headers: corsHeaders,
+    });
+  }
+}
+
 export async function handleIndexRequest(
   corsHeaders: Record<string, string>
 ): Promise<Response> {
