@@ -4,6 +4,9 @@
 db
 /db
 
+# Assets
+testImages/
+
 .history
 /.history
 
