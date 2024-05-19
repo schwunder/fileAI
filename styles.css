@@ -59,3 +59,55 @@ body {
   font-weight: normal;
   margin-left: 10px;
 }
+
+/* Editable title */
+.json-data .title[contenteditable="true"] {
+  border: 1px dashed #ccc;
+  padding: 2px;
+}
+
+/* Tag buttons */
+.json-data .tag-button {
+  background-color: green;
+  color: white;
+  border: none;
+  padding: 5px;
+  margin: 2px;
+  cursor: pointer;
+}
+
+.json-data .tag-button.selected {
+  background-color: red;
+}
+
+/* Action buttons */
+.json-data .action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.json-data .write-button {
+  background-color: blue;
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.json-data .retry-button {
+  background-color: yellow;
+  color: black;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.json-data .discard-button {
+  background-color: purple;
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+}
