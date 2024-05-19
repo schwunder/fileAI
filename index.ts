@@ -1,8 +1,13 @@
 import { readdirSync } from "fs";
-import processImage from "./processImage"; // Make sure to import the processImage function
 import { handleImageRoutes, handleImageFile } from "./routes/images";
-import { handleJsonFile } from "./routes/json";
-import { handleStyles, handleScript, handleOptions } from "./routes/static";
+import { handleJsonFileRequest } from "./routes/json";
+import { handlePostRequest } from "./routes/post";
+import {
+  handleStyles,
+  handleScript,
+  handleOptions,
+  handleIndexRequest,
+} from "./routes/static";
 import { handleProcessImage } from "./routes/methods";
 
 function getTestImages() {
@@ -46,10 +51,6 @@ const server = Bun.serve({
       return handleImageFile(requestUrl, corsHeaders);
     }
 
-    if (requestUrl.pathname === "/db") {
-      return handleJsonFile(requestUrl, corsHeaders);
-    }
-
     if (requestUrl.pathname === "/processImage" && method === "POST") {
       return handleProcessImage(request, corsHeaders);
     }
@@ -58,45 +59,15 @@ const server = Bun.serve({
       requestUrl.pathname.startsWith("/db/testImages/") &&
       requestUrl.pathname.endsWith(".json")
     ) {
-      const filePath = `.${requestUrl.pathname}`;
-      console.log("Handling request for:", filePath);
-      try {
-        const file = await Bun.file(filePath).text();
-        return new Response(file, {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      } catch (error) {
-        console.error("Error fetching file:", error);
-        return new Response("File not found", {
-          status: 404,
-          headers: corsHeaders,
-        });
-      }
+      return handleJsonFileRequest(requestUrl, corsHeaders);
     }
 
     if (method === "POST") {
-      const body = await request.json();
-      console.log("Handling POST request with body:", body);
-      return new Response(`Welcome to Bun! ${body}`, { headers: corsHeaders });
+      return handlePostRequest(request, corsHeaders);
     }
 
     if (requestUrl.pathname === "/" || requestUrl.pathname === "/index.html") {
-      console.log("Handling / or /index.html request");
-      try {
-        const file = await Bun.file("index.html").text();
-        return new Response(file, {
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "text/html",
-          },
-        });
-      } catch (error) {
-        console.error("Error fetching index.html:", error);
-        return new Response("File not found", {
-          status: 404,
-          headers: corsHeaders,
-        });
-      }
+      return handleIndexRequest(corsHeaders);
     }
 
     console.log("Unhandled request");

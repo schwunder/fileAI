@@ -3,7 +3,7 @@ import { getTestImages } from "../utils";
 export function handleImageRoutes(
   corsHeaders: Record<string, string>
 ): Response {
-  const images = getTestImages();
+  const images: string[] = getTestImages();
   return new Response(JSON.stringify(images), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
@@ -13,9 +13,9 @@ export async function handleImageFile(
   requestUrl: URL,
   corsHeaders: Record<string, string>
 ): Promise<Response> {
-  const filePath = `.${requestUrl.pathname}`;
+  const filePath: string = `.${requestUrl.pathname}`;
   try {
-    const file = await Bun.file(filePath).arrayBuffer();
+    const file: ArrayBuffer = await Bun.file(filePath).arrayBuffer();
     return new Response(file, {
       headers: {
         ...corsHeaders,

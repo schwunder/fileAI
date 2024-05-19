@@ -36,6 +36,27 @@ export async function handleScript(
   }
 }
 
+export async function handleIndexRequest(
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  console.log("Handling / or /index.html request");
+  try {
+    const file = await Bun.file("index.html").text();
+    return new Response(file, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/html",
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching index.html:", error);
+    return new Response("File not found", {
+      status: 404,
+      headers: corsHeaders,
+    });
+  }
+}
+
 export function handleOptions(corsHeaders: Record<string, string>): Response {
   return new Response(null, { headers: corsHeaders });
 }
