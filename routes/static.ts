@@ -36,6 +36,44 @@ export async function handleScript(
   }
 }
 
+export async function handleScriptComponent(
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    const file = await Bun.file("components.js").text();
+    return new Response(file, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/javascript",
+      },
+    });
+  } catch (error) {
+    return new Response("Error fetching components.js: File not found", {
+      status: 404,
+      headers: corsHeaders,
+    });
+  }
+}
+
+export async function handleScriptFetch(
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    const file = await Bun.file("fetch.js").text();
+    return new Response(file, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/javascript",
+      },
+    });
+  } catch (error) {
+    return new Response("Error fetching fetch.js: File not found", {
+      status: 404,
+      headers: corsHeaders,
+    });
+  }
+}
+
 export async function handleIndexRequest(
   corsHeaders: Record<string, string>
 ): Promise<Response> {

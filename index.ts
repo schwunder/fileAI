@@ -7,6 +7,8 @@ import {
   handleScript,
   handleOptions,
   handleIndexRequest,
+  handleScriptComponent,
+  handleScriptFetch,
 } from "./routes/static";
 import { handleProcessImage } from "./routes/methods";
 
@@ -41,6 +43,14 @@ const server = Bun.serve({
 
     if (requestUrl.pathname === "/script.js") {
       return handleScript(corsHeaders);
+    }
+
+    if (requestUrl.pathname === "/components.js") {
+      return handleScriptComponent(corsHeaders);
+    }
+
+    if (requestUrl.pathname === "/fetch.js") {
+      return handleScriptFetch(corsHeaders);
     }
 
     if (requestUrl.pathname === "/testImages") {
