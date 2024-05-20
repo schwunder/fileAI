@@ -1,25 +1,7 @@
 import { readdirSync } from "fs";
-import {
-  handleImageRoutes,
-  handleImageFile,
-  handleAllImageFiles,
-} from "./routes/images";
-import {
-  handleJsonFileRequest,
-  handleAllJsonFilesRequest,
-} from "./routes/json";
-import { handlePostRequest } from "./routes/post";
-import {
-  handleStyles,
-  handleScript,
-  handleOptions,
-  handleIndexRequest,
-  handleScriptComponent,
-  handleScriptFetch,
-  handleScriptUtils,
-  handleSirenSound,
-  handleFOffSound,
-} from "./routes/static";
+import { handleAllImageFiles, handleImageFile } from "./routes/images";
+import { handleAllJsonFilesRequest } from "./routes/json";
+import { handleSirenSound, handleFOffSound } from "./routes/static";
 import { handleProcessImage, handleMutateImageData } from "./routes/methods";
 
 function getTestImages() {
@@ -44,27 +26,10 @@ const server = Bun.serve({
     };
 
     if (method === "OPTIONS") {
-      return handleOptions(corsHeaders);
-    }
-
-    if (requestUrl.pathname === "/styles.css") {
-      return handleStyles(corsHeaders);
-    }
-
-    if (requestUrl.pathname === "/script.js") {
-      return handleScript(corsHeaders);
-    }
-
-    if (requestUrl.pathname === "/components.js") {
-      return handleScriptComponent(corsHeaders);
-    }
-
-    if (requestUrl.pathname === "/fetch.js") {
-      return handleScriptFetch(corsHeaders);
-    }
-
-    if (requestUrl.pathname === "/utilsFrontend.js") {
-      return handleScriptUtils(corsHeaders);
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders,
+      });
     }
 
     if (requestUrl.pathname === "/fOff.mp3") {
@@ -75,27 +40,12 @@ const server = Bun.serve({
       return handleSirenSound(corsHeaders);
     }
 
-    if (requestUrl.pathname === "/testImages") {
-      return handleImageRoutes(corsHeaders);
-    }
-
-    if (requestUrl.pathname.startsWith("/testImages/")) {
-      return handleImageFile(requestUrl, corsHeaders);
-    }
-
     if (requestUrl.pathname === "/processImage" && method === "POST") {
       return handleProcessImage(request, corsHeaders);
     }
 
     if (requestUrl.pathname === "/mutateImageData" && method === "POST") {
       return handleMutateImageData(request, corsHeaders);
-    }
-
-    if (
-      requestUrl.pathname.startsWith("/db/testImages/") &&
-      requestUrl.pathname.endsWith(".json")
-    ) {
-      return handleJsonFileRequest(requestUrl, corsHeaders);
     }
 
     if (requestUrl.pathname === "/db/testImages/all") {
@@ -106,13 +56,9 @@ const server = Bun.serve({
       return handleAllImageFiles(corsHeaders);
     }
 
-    if (method === "POST") {
-      return handlePostRequest(request, corsHeaders);
+    if (requestUrl.pathname.startsWith("/testImages/")) {
+      return handleImageFile(requestUrl, corsHeaders);
     }
-
-    //if (requestUrl.pathname === "/" || requestUrl.pathname === "/index.html") {
-    //  return handleIndexRequest(corsHeaders);
-    //}
 
     console.log("Unhandled request");
     return new Response("no post", { headers: corsHeaders });

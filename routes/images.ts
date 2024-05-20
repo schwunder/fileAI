@@ -1,14 +1,4 @@
-import { getTestImages } from "../utils";
 import { readdirSync } from "fs";
-
-export function handleImageRoutes(
-  corsHeaders: Record<string, string>
-): Response {
-  const images: string[] = getTestImages();
-  return new Response(JSON.stringify(images), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
 
 export async function handleImageFile(
   requestUrl: URL,

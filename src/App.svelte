@@ -3,7 +3,6 @@
   import ImageGrid from "./lib/ImageGrid.svelte";
 
   let imageProps = [];
-  let firstImageSrc = "";
 
   export async function fetchJsons(url) {
     const response = await fetch(url);
@@ -27,6 +26,7 @@
   async function fetchProps() {
     try {
       const jsons = await fetchJsons("/db/testImages/all");
+
       console.log("Fetched JSONs:", jsons);
 
       const blobs = await Promise.all(
