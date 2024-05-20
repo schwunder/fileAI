@@ -12,7 +12,7 @@ import {
   handleScriptUtils,
   handleSirenSound, // Added this line
 } from "./routes/static";
-import { handleProcessImage } from "./routes/methods";
+import { handleProcessImage, handleMutateImageData } from "./routes/methods";
 
 function getTestImages() {
   const images = readdirSync("./testImages").map(
@@ -73,6 +73,10 @@ const server = Bun.serve({
 
     if (requestUrl.pathname === "/processImage" && method === "POST") {
       return handleProcessImage(request, corsHeaders);
+    }
+
+    if (requestUrl.pathname === "/mutateImageData" && method === "POST") {
+      return handleMutateImageData(request, corsHeaders);
     }
 
     if (

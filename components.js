@@ -104,6 +104,7 @@ function addEventListeners(jsonDataElement) {
     .querySelector(".write-button")
     .addEventListener("click", () => {
       console.log("Write button clicked");
+      // handleWriteButtonClick(jsonDataElement);
     });
   jsonDataElement
     .querySelector(".retry-button")
@@ -115,4 +116,21 @@ function addEventListeners(jsonDataElement) {
     .addEventListener("click", () => {
       console.log("Discard button clicked");
     });
+}
+
+function handleWriteButtonClick(jsonDataElement) {
+  const title = jsonDataElement.querySelector(".title").textContent;
+  const description = jsonDataElement.querySelector(".description").textContent;
+  const tags = Array.from(
+    jsonDataElement.querySelectorAll(".tag-button.selected")
+  ).map((button) => button.textContent);
+
+  fetch("/writeData", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, description, tags }),
+  })
+    .then((response) => response.json())
+    .then((data) => console.log("Data written successfully:", data))
+    .catch((error) => console.error("Error writing data:", error));
 }
