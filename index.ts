@@ -1,6 +1,13 @@
 import { readdirSync } from "fs";
-import { handleImageRoutes, handleImageFile } from "./routes/images";
-import { handleJsonFileRequest } from "./routes/json";
+import {
+  handleImageRoutes,
+  handleImageFile,
+  handleAllImageFiles,
+} from "./routes/images";
+import {
+  handleJsonFileRequest,
+  handleAllJsonFilesRequest,
+} from "./routes/json";
 import { handlePostRequest } from "./routes/post";
 import {
   handleStyles,
@@ -10,7 +17,8 @@ import {
   handleScriptComponent,
   handleScriptFetch,
   handleScriptUtils,
-  handleSirenSound, // Added this line
+  handleSirenSound,
+  handleFOffSound,
 } from "./routes/static";
 import { handleProcessImage, handleMutateImageData } from "./routes/methods";
 
@@ -60,11 +68,11 @@ const server = Bun.serve({
     }
 
     if (requestUrl.pathname === "/fOff.mp3") {
-      return handleSirenSound(corsHeaders); // Added this line
+      return handleFOffSound(corsHeaders);
     }
 
     if (requestUrl.pathname === "/siren.wav") {
-      return handleSirenSound(corsHeaders); // Added this line
+      return handleSirenSound(corsHeaders);
     }
 
     if (requestUrl.pathname === "/testImages") {
@@ -90,13 +98,21 @@ const server = Bun.serve({
       return handleJsonFileRequest(requestUrl, corsHeaders);
     }
 
+    if (requestUrl.pathname === "/db/testImages/all") {
+      return handleAllJsonFilesRequest(corsHeaders);
+    }
+
+    if (requestUrl.pathname === "/testImages/all") {
+      return handleAllImageFiles(corsHeaders);
+    }
+
     if (method === "POST") {
       return handlePostRequest(request, corsHeaders);
     }
 
-    if (requestUrl.pathname === "/" || requestUrl.pathname === "/index.html") {
-      return handleIndexRequest(corsHeaders);
-    }
+    //if (requestUrl.pathname === "/" || requestUrl.pathname === "/index.html") {
+    //  return handleIndexRequest(corsHeaders);
+    //}
 
     console.log("Unhandled request");
     return new Response("no post", { headers: corsHeaders });

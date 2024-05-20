@@ -81,7 +81,7 @@ export default async function processImage(imgPath: string): Promise<void> {
     Bun.write(
       `db/${imgPath}.json`,
 
-      JSON.stringify([imageData], null, 2)
+      JSON.stringify(imageData, null, 2)
     );
   });
 }
