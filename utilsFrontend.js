@@ -99,8 +99,20 @@ export function triggerConfetti() {
   }, 5000); // Stop after 5 seconds
 }
 
+export function playFOffSound() {
+  const audio = new Audio("/fOff.mp3");
+  audio
+    .play()
+    .then(() => {
+      console.log("Audio playback started");
+    })
+    .catch((error) => {
+      console.error("Error playing audio:", error);
+    });
+}
+
 export function playSirenSound() {
-  const audio = new Audio("/siren.wav");
+  const audio = new Audio("/siren.mp3");
   audio
     .play()
     .then(() => {

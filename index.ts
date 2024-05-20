@@ -59,6 +59,10 @@ const server = Bun.serve({
       return handleScriptUtils(corsHeaders);
     }
 
+    if (requestUrl.pathname === "/fOff.mp3") {
+      return handleSirenSound(corsHeaders); // Added this line
+    }
+
     if (requestUrl.pathname === "/siren.wav") {
       return handleSirenSound(corsHeaders); // Added this line
     }
