@@ -6,19 +6,49 @@
 
   export let imageData;
 
+  async function processImage(imageUrl) {
+    try {
+      const response = await fetch("/processImage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imgPath: imageUrl }),
+      });
+      if (!response.ok) throw new Error("Network response was not ok");
+
+      console.log("Image processed successfully");
+    } catch (error) {
+      console.error("Error processing image:", error);
+    }
+  }
+
+  async function writeData(title, description, tags) {
+    try {
+      const response = await fetch("/mutateImageData", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description, tags }),
+      });
+      if (!response.ok) throw new Error("Network response was not ok");
+
+      const data = await response.json();
+      console.log("Data written successfully:", data);
+    } catch (error) {
+      console.error("Error writing data:", error);
+    }
+  }
+
   function decomposeImageData(data) {
     console.log(data);
     return {
       text: data.imgPath.split("/").pop(),
-      button: { imageSrc: data.src, onClick: () => console.log(data.src) }, // Pass src directly to Button
+      button: { imageSrc: data.src, onClick: () => processImage(data.imgPath) }, // Use processImage function
       jsonData: {
         title: data.title,
         tags: data.tags,
         description: data.description,
       },
       choices: {
-        onWrite: () => {},
-        onRetry: () => {},
+        onWrite: () => writeData(data.title, data.description, data.tags),
         onDiscard: () => {},
       },
     };

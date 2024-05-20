@@ -16,6 +16,17 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/testImages/, "/testImages"),
       },
+      "/processImage": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/processImage/, "/processImage"),
+      },
+      "/mutateImageData": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        rewrite: (path) =>
+          path.replace(/^\/mutateImageData/, "/mutateImageData"),
+      },
     },
   },
 });
