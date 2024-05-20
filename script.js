@@ -1,10 +1,14 @@
 import { fetchJson, fetchBlob } from "./fetch.js";
 import { createGridItem, updateGridItemWithJsonData } from "./components.js";
-import { pipe } from "./utilsFrontend.js";
+import { pipe, playSirenSound } from "./utilsFrontend.js";
 
 document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
+  document.getElementById("playSirenButton").addEventListener("click", () => {
+    playSirenSound();
+  });
+
   try {
     const images = await fetchJson("/testImages");
     const gridContainer = document.getElementById("imageGrid");

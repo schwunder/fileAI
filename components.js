@@ -1,4 +1,5 @@
 import { pipe } from "./utilsFrontend.js";
+import { triggerConfetti, playSirenSound } from "./utilsFrontend.js";
 
 export function createGridItem(imageUrl, imageObjectURL) {
   return pipe(null, [
@@ -22,6 +23,7 @@ export function createGridItem(imageUrl, imageObjectURL) {
     },
   ]);
 }
+
 export function updateGridItemWithJsonData(gridItem, jsonData) {
   const jsonDataElement = gridItem.querySelector(".json-data");
   jsonDataElement.innerHTML = generateJsonDataHtml(jsonData[0]);
@@ -62,7 +64,11 @@ function createButtonWithImage(imageSrc, onClick) {
   const img = document.createElement("img");
   img.src = imageSrc;
   button.appendChild(img);
-  button.onclick = onClick;
+  button.onclick = () => {
+    onClick();
+    triggerConfetti();
+    playSirenSound();
+  };
   return button;
 }
 

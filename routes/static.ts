@@ -93,6 +93,25 @@ export async function handleScriptUtils(
   }
 }
 
+export async function handleSirenSound(
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    const file = await Bun.file("siren.wav").arrayBuffer();
+    return new Response(file, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "audio/wav",
+      },
+    });
+  } catch (error) {
+    return new Response("Error fetching siren.wav: File not found", {
+      status: 404,
+      headers: corsHeaders,
+    });
+  }
+}
+
 export async function handleIndexRequest(
   corsHeaders: Record<string, string>
 ): Promise<Response> {

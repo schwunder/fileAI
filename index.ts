@@ -9,7 +9,8 @@ import {
   handleIndexRequest,
   handleScriptComponent,
   handleScriptFetch,
-  handleScriptUtils, // Added this line
+  handleScriptUtils,
+  handleSirenSound, // Added this line
 } from "./routes/static";
 import { handleProcessImage } from "./routes/methods";
 
@@ -55,8 +56,11 @@ const server = Bun.serve({
     }
 
     if (requestUrl.pathname === "/utilsFrontend.js") {
-      // Added this line
-      return handleScriptUtils(corsHeaders); // Added this line
+      return handleScriptUtils(corsHeaders);
+    }
+
+    if (requestUrl.pathname === "/siren.wav") {
+      return handleSirenSound(corsHeaders); // Added this line
     }
 
     if (requestUrl.pathname === "/testImages") {
