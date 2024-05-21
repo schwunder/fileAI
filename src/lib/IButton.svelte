@@ -1,6 +1,4 @@
 <script>
-  import { cons } from "effect/List";
-
   //import { triggerConfetti, playSirenSound } from "../utilsFrontend.js";
 
   export let imageSrc; // Define imageSrc as a prop

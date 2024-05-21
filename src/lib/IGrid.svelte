@@ -1,16 +1,16 @@
 <script>
-  import ImageComponent from "./ImageComponent.svelte";
-  export let imageProps = [];
+  import Component from "./IComponent.svelte";
+  export let jsons = [];
 </script>
 
-<div class="grid-container">
-  {#each imageProps as prop}
-    <ImageComponent imageData={prop} />
+<div class="container">
+  {#each jsons as json}
+    <Component data={json} />
   {/each}
 </div>
 
 <style>
-  .grid-container {
+  .container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: repeat(3, 1fr);

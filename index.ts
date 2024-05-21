@@ -1,6 +1,9 @@
 import { readdirSync } from "fs";
 import { handleAllImageFiles, handleImageFile } from "./routes/images";
-import { handleAllJsonFilesRequest } from "./routes/json";
+import {
+  handleAllJsonFilesRequest,
+  handleJsonFileRequest,
+} from "./routes/json";
 import { handleSirenSound, handleFOffSound } from "./routes/static";
 import { handleProcessImage, handleMutateImageData } from "./routes/methods";
 
@@ -58,6 +61,10 @@ const server = Bun.serve({
 
     if (requestUrl.pathname.startsWith("/testImages/")) {
       return handleImageFile(requestUrl, corsHeaders);
+    }
+
+    if (requestUrl.pathname.startsWith("/db/testImages/")) {
+      return handleJsonFileRequest(requestUrl, corsHeaders);
     }
 
     console.log("Unhandled request");

@@ -1,7 +1,7 @@
 <script>
-  import Title from "./ImageTitle.svelte";
-  import Tags from "./ImageTags.svelte";
-  import Description from "./ImageDescription.svelte";
+  import Title from "./ITitle.svelte";
+  import Tags from "./ITags.svelte";
+  import Description from "./IDescription.svelte";
   export let title;
   export let tags;
   export let description;

@@ -3,13 +3,13 @@
   export let text = "";
 </script>
 
-<div class="container">
+<div class="box">
   <p class="header">{text}</p>
   <input type="checkbox" />
 </div>
 
 <style>
-  .container {
+  .box {
     display: flex;
     align-items: center;
     margin: 1rem;
