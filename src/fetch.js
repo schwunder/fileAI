@@ -1,6 +1,6 @@
 export async function processImage(imageUrl) {
   try {
-    const response = await fetch("/processImage", {
+    const response = await fetch("http://localhost:3000/processImage", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ imgPath: imageUrl }),
@@ -15,7 +15,7 @@ export async function processImage(imageUrl) {
 
 export async function writeData(title, description, tags) {
   try {
-    const response = await fetch("/mutateImageData", {
+    const response = await fetch("http://localhost:3000/mutateImageData", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, description, tags }),
@@ -28,7 +28,7 @@ export async function writeData(title, description, tags) {
     throw new Error("Error writing data:", error);
   }
 }
-export async function fetchJsons() {
+export async function getDB() {
   try {
     const res = await fetch("http://localhost:3000/db/");
     return await res.json();
