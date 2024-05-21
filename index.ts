@@ -2,90 +2,98 @@ import { readdirSync } from "fs";
 import processImage from "./processImage";
 import mutateImageData from "./mutateImageData";
 
+const corsHeaders: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+const createResponse = (
+  body: any,
+  status: number = 200,
+  headers: Record<string, string> = {}
+): Response =>
+  new Response(body, { status, headers: { ...corsHeaders, ...headers } });
+
+type RouteHandler = (requestUrl: URL, request: Request) => Promise<Response>;
+
+const routes: Record<string, RouteHandler> = {
+  "POST /processImage": async (requestUrl, request) => {
+    const { imgPath }: { imgPath: string } = await request.json();
+    await processImage(imgPath);
+    return createResponse(null);
+  },
+  "POST /mutateImageData": async (requestUrl, request) => {
+    const {
+      absPath,
+      comment,
+      tags,
+    }: { absPath: string; comment: string; tags: string[] } =
+      await request.json();
+    console.log("Received data:", { absPath, comment, tags });
+    await mutateImageData(absPath, comment, tags);
+    return createResponse(
+      JSON.stringify({ message: "Data written successfully" }),
+      200,
+      { "Content-Type": "application/json" }
+    );
+  },
+  "GET /db/": async () => {
+    try {
+      const files: string[] = readdirSync("./db/testJsons").filter((file) =>
+        file.endsWith(".json")
+      );
+      const jsonData = await Promise.all(
+        files.map(async (file) => {
+          const filePath = `./db/testJsons/${file}`;
+          const fileContent = await Bun.file(filePath).text();
+          return JSON.parse(fileContent);
+        })
+      );
+      return createResponse(JSON.stringify(jsonData), 200, {
+        "Content-Type": "application/json",
+      });
+    } catch (error) {
+      console.error("Error fetching JSON files:", error);
+      return createResponse("Error fetching JSON files", 500);
+    }
+  },
+  "GET /testImages/*": async (requestUrl) => {
+    const filePath = `.${requestUrl.pathname}`;
+    try {
+      const file = await Bun.file(filePath).arrayBuffer();
+      return createResponse(file, 200, { "Content-Type": "image/png" });
+    } catch (error) {
+      return createResponse(`Error fetching file: ${filePath} not found`, 404);
+    }
+  },
+};
+
 const server = Bun.serve({
   port: 3000,
-  async fetch(request) {
-    const { method, url, headers } = request;
-    console.log("Received request:", { method, url, headers });
+  async fetch(request: Request): Promise<Response> {
+    const { method, url } = request;
+    console.log("Received request:", { method, url });
 
     const requestUrl = new URL(request.url);
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    };
+    const routeKey = `${method} ${requestUrl.pathname}`;
 
     if (method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders,
-      });
+      return createResponse(null, 204);
     }
 
-    if (requestUrl.pathname === "/processImage" && method === "POST") {
-      const { imgPath } = await request.json();
-      await processImage(imgPath);
-      return new Response(null, {
-        headers: corsHeaders,
-      });
-    }
-
-    if (requestUrl.pathname === "/mutateImageData" && method === "POST") {
-      const { absPath, comment, tags } = await request.json();
-      console.log("Received data:", { absPath, comment, tags });
-      await mutateImageData(absPath, comment, tags);
-      return new Response(
-        JSON.stringify({ message: "Data written successfully" }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    if (requestUrl.pathname === "/db/") {
-      try {
-        const files = readdirSync("./db/testImages").filter((file: string) =>
-          file.endsWith(".json")
-        );
-        const jsonData = await Promise.all(
-          files.map(async (file) => {
-            const filePath = `./db/testImages/${file}`;
-            const fileContent = await Bun.file(filePath).text();
-            return JSON.parse(fileContent);
-          })
-        );
-        return new Response(JSON.stringify(jsonData), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      } catch (error) {
-        console.error("Error fetching JSON files:", error);
-        return new Response("Error fetching JSON files", {
-          status: 500,
-          headers: corsHeaders,
-        });
-      }
-    }
-
-    if (requestUrl.pathname.startsWith("/testImages/")) {
-      const filePath: string = `.${requestUrl.pathname}`;
-      try {
-        const file: ArrayBuffer = await Bun.file(filePath).arrayBuffer();
-        return new Response(file, {
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "image/png",
-          },
-        });
-      } catch (error) {
-        return new Response(`Error fetching file: ${filePath} not found`, {
-          status: 404,
-          headers: corsHeaders,
-        });
+    for (const [route, handler] of Object.entries(routes)) {
+      const [routeMethod, routePath] = route.split(" ");
+      if (
+        method === routeMethod &&
+        (routePath === requestUrl.pathname || routePath.endsWith("*"))
+      ) {
+        return handler(requestUrl, request);
       }
     }
 
     console.log("Unhandled request");
-    return new Response("no post", { headers: corsHeaders });
+    return createResponse("no post");
   },
 });
 
