@@ -1,38 +1,40 @@
-export async function processImage(imageUrl) {
-  try {
-    const response = await fetch("http://localhost:3000/processImage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imgPath: imageUrl }),
-    });
-    if (!response.ok) throw new Error("Network response was not ok");
+const API_BASE_URL = "http://localhost:3000";
 
-    console.log("Image processed successfully");
-  } catch (error) {
-    throw new Error("Error processing image:", error);
+async function fetchAPI(endpoint, method = "GET", data = null) {
+  const options = {
+    method,
+    headers: { "Content-Type": "application/json" },
+  };
+
+  if (data) {
+    options.body = JSON.stringify(data);
   }
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.status}`);
+  }
+
+  if (method === "GET") {
+    return response.json();
+  }
+}
+
+export async function processImage(imageUrl) {
+  await fetchAPI("/processImage", "POST", { imgPath: imageUrl });
+  console.log("Image processed successfully");
 }
 
 export async function writeData(title, description, tags) {
-  try {
-    const response = await fetch("http://localhost:3000/mutateImageData", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, tags }),
-    });
-    if (!response.ok) throw new Error("Network response was not ok");
-
-    const data = await response.json();
-    console.log("Data written successfully:", data);
-  } catch (error) {
-    throw new Error("Error writing data:", error);
-  }
+  const data = await fetchAPI("/mutateImageData", "POST", {
+    title,
+    description,
+    tags,
+  });
+  console.log("Data written successfully:", data);
 }
+
 export async function getDB() {
-  try {
-    const res = await fetch("http://localhost:3000/db/");
-    return await res.json();
-  } catch (error) {
-    throw new Error(`Error fetching data: ${error.message}`);
-  }
+  return fetchAPI("/db");
 }
