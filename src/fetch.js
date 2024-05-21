@@ -30,7 +30,7 @@ export async function writeData(title, description, tags) {
 }
 export async function fetchJsons() {
   try {
-    const res = await fetch("http://localhost:3000/db/testImages/all");
+    const res = await fetch("http://localhost:3000/db/");
     return await res.json();
   } catch (error) {
     throw new Error(`Error fetching data: ${error.message}`);

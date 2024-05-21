@@ -35,14 +35,6 @@ const server = Bun.serve({
       });
     }
 
-    if (requestUrl.pathname === "/fOff.mp3") {
-      return handleFOffSound(corsHeaders);
-    }
-
-    if (requestUrl.pathname === "/siren.wav") {
-      return handleSirenSound(corsHeaders);
-    }
-
     if (requestUrl.pathname === "/processImage" && method === "POST") {
       return handleProcessImage(request, corsHeaders);
     }
@@ -51,20 +43,12 @@ const server = Bun.serve({
       return handleMutateImageData(request, corsHeaders);
     }
 
-    if (requestUrl.pathname === "/db/testImages/all") {
+    if (requestUrl.pathname === "/db/") {
       return handleAllJsonFilesRequest(corsHeaders);
-    }
-
-    if (requestUrl.pathname === "/testImages/all") {
-      return handleAllImageFiles(corsHeaders);
     }
 
     if (requestUrl.pathname.startsWith("/testImages/")) {
       return handleImageFile(requestUrl, corsHeaders);
-    }
-
-    if (requestUrl.pathname.startsWith("/db/testImages/")) {
-      return handleJsonFileRequest(requestUrl, corsHeaders);
     }
 
     console.log("Unhandled request");
