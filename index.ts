@@ -1,65 +1,53 @@
-import { serve } from "bun";
+import express from "express";
+import type { Request, Response } from "express";
 import { glob } from "glob";
 import { readFile } from "fs/promises";
 import processImage from "./processImage";
 import mutateImageData from "./mutateImageData";
+import cors from "cors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-const server = serve({
-  port: 3000,
-  async fetch(req: Request) {
-    const { method, url } = req;
-    const path = new URL(url).pathname;
-
-    if (method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders,
-      });
-    }
-
-    if (method === "GET" && path === "/db") {
-      const files = await glob("./db/testJsons/*.json");
-      const jsonData = await Promise.all(
-        files.map(async (file) => JSON.parse(await readFile(file, "utf8")))
-      );
-      return new Response(JSON.stringify(jsonData), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (method === "GET" && path.startsWith("/testImages/")) {
-      const filePath = `.${path}`;
-      const file = await readFile(filePath);
-      return new Response(file, {
-        headers: { ...corsHeaders, "Content-Type": "image/png" },
-      });
-    }
-
-    if (method === "POST" && path === "/processImage") {
-      const { imgPath } = await req.json();
-      await processImage(imgPath);
-      return new Response(null, { headers: corsHeaders });
-    }
-
-    if (method === "POST" && path === "/mutateImageData") {
-      const { absPath, comment, tags } = await req.json();
-      await mutateImageData(absPath, comment, tags);
-      return new Response(
-        JSON.stringify({ message: "Data written successfully" }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    return new Response("Not Found", { status: 404, headers: corsHeaders });
-  },
+app.get("/db", async (req: Request, res: Response) => {
+  try {
+    const files = await glob.sync("./db/testJsons/*.json");
+    const jsonData = await Promise.all(
+      files.map(async (file) => JSON.parse(await readFile(file, "utf8")))
+    );
+    res.send(jsonData);
+  } catch (err: any) {
+    res.status(500).send(err.message);
+  }
 });
 
-console.log(`Listening on localhost:${server.port}`);
+app.get("/testImages/*", async (req: Request, res: Response) => {
+  const filePath = `.${req.path}`;
+  const file = await readFile(filePath);
+  res.type("png").send(file);
+});
+
+app.post("/processImage", async (req: Request, res: Response) => {
+  const { imgPath }: { imgPath: string } = req.body;
+  await processImage(imgPath);
+  res.sendStatus(200);
+});
+
+app.post("/mutateImageData", async (req: Request, res: Response) => {
+  const {
+    absPath,
+    comment,
+    tags,
+  }: { absPath: string; comment: string; tags: string[] } = req.body;
+  await mutateImageData(absPath, comment, tags);
+  res.send({ message: "Data written successfully" });
+});
+
+app.use((req: Request, res: Response) => {
+  res.status(404).send("Not Found");
+});
+
+app.listen(3000, () => {
+  console.log("Listening on http://localhost:3000");
+});
