@@ -74,7 +74,7 @@ export async function processImage(imgPath: string): Promise<imageMeta> {
 
     const { tags, title } = await getMetadata(description);
 
-    const imageData = {
+    const imageData: imageMeta = {
       imgPath,
       tags,
       title,
@@ -98,13 +98,17 @@ export async function processImage(imgPath: string): Promise<imageMeta> {
   }
 }
 
-export type imageMeta = {
-  imgPath: string;
-  tags: string[];
-  title: string;
-  description: any;
-  timeStamp: number;
-};
+// Define the schema
+const imageMetaSchema = z.object({
+  imgPath: z.string(),
+  tags: z.array(z.string()),
+  title: z.string(),
+  description: z.string(),
+  timeStamp: z.number(),
+});
+
+// Infer the type from the schema
+export type imageMeta = z.infer<typeof imageMetaSchema>;
 
 export async function processImages(filePaths: string[]): Promise<imageMeta[]> {
   const imageDetails = [];
