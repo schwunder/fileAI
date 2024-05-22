@@ -2,9 +2,10 @@ import express from "express";
 import type { Request, Response } from "express";
 import { glob } from "glob";
 import { readFile } from "fs/promises";
-import processImage from "./processImage";
+import { processImage } from "./processImage";
 import mutateImageData from "./mutateImageData";
 import cors from "cors";
+import { folderToDB } from "./copyToDB";
 
 const app = express();
 app.use(cors());
@@ -42,6 +43,12 @@ app.post("/mutateImageData", async (req: Request, res: Response) => {
   }: { absPath: string; comment: string; tags: string[] } = req.body;
   await mutateImageData(absPath, comment, tags);
   res.send({ message: "Data written successfully" });
+});
+
+app.post("/addFolder", async (req: Request, res: Response) => {
+  const absoluteDirectoryPath: string = req.body;
+  await folderToDB(absoluteDirectoryPath);
+  res.send({ message: "Folder added" });
 });
 
 app.use((req: Request, res: Response) => {
