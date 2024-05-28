@@ -4,7 +4,7 @@
   import { addFolder } from "./api.js"
 
   let db = DB({ method: "GET" });
-  let folderPath = "";
+  let folderPath = ""; // only available at first initialization
 
   async function handleAddFolder() {
     await addFolder(folderPath);
@@ -22,7 +22,7 @@
     {#if db.length > 0}
       <div class="container">
         {#each db as metaData}
-          <ImageCard {metaData} />
+          <ImageCard metaData={metaData} folderPath={folderPath} />
         {/each}
       </div>
     {:else}

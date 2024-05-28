@@ -41,10 +41,12 @@ app.post("/processImage", async (req: Request, res: Response) => {
 app.post("/mutateImageData", async (req: Request, res: Response) => {
   const {
     absPath,
+    newName,
     comment,
     tags,
-  }: { absPath: string; comment: string; tags: string[] } = req.body;
-  await mutateImageData(absPath, comment, tags);
+  }: { absPath: string; newName: string; comment: string; tags: string[] } =
+    req.body;
+  await mutateImageData(absPath, newName, comment, tags);
   res.send({ message: "Data written successfully" });
 });
 

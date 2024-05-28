@@ -26,10 +26,11 @@ export async function processImage(imageUrl) {
   console.log("Image processed successfully");
 }
 
-export async function writeData(title, description, tags) {
+export async function writeData(absPath, newName, comment, tags) {
   const data = await fetchAPI("/mutateImageData", "POST", {
-    title,
-    description,
+    absPath,
+    newName,
+    comment,
     tags,
   });
   console.log("Data written successfully:", data);

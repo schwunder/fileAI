@@ -4,10 +4,6 @@ import { generateObject } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { pipe, truncateLog } from "./utils";
 import { delay, retryWithExponentialBackoff } from "./utils";
-import pino from "pino";
-const logger = pino();
-
-logger.info(truncateLog(`Using OpenAI API Key: ${process.env.OPENAI_API_KEY}`));
 
 const maxDescriptionLength = 50;
 
@@ -16,7 +12,6 @@ const getImageDescription = async (
   prompt: string
 ): Promise<string> => {
   const request = async (): Promise<string> => {
-    logger.info(truncateLog("Sending request to get image description"));
     const res = await axios.post<{
       choices: { message: { content: string } }[];
     }>(
@@ -44,7 +39,6 @@ const getImageDescription = async (
         },
       }
     );
-    logger.info(truncateLog("Received response from OpenAI"));
     return res.data.choices[0].message.content;
   };
 
@@ -54,7 +48,6 @@ const getImageDescription = async (
     const errorMessage = truncateLog(
       "Error sending request to OpenAI: " + (error as Error).message
     );
-    logger.error({ err: error }, errorMessage);
     throw new Error(errorMessage);
   }
 };
@@ -78,7 +71,6 @@ const getMetadata = async (
 };
 
 export async function processImage(imgPath: string): Promise<imageMeta> {
-  logger.info(truncateLog(`Starting to process image: ${imgPath}`));
   const absPath = `${import.meta.dir}/${imgPath}`;
 
   try {
@@ -114,13 +106,11 @@ export async function processImage(imgPath: string): Promise<imageMeta> {
     });
     imageDataSchema.parse(imageData);
     // Return or save imageData as needed
-    logger.info(truncateLog(`Successfully processed image: ${imgPath}`));
     return imageData;
   } catch (error) {
     const errorMessage = truncateLog(
       "Error processing image: " + (error as Error).message
     );
-    logger.error({ err: error }, errorMessage);
     throw new Error(errorMessage);
   }
 }
@@ -145,14 +135,8 @@ export async function processImages(filePaths: string[]): Promise<imageMeta[]> {
     const batch = filePaths.slice(i, i + batchSize);
     const batchPromises = batch.map(async (filePath) => {
       try {
-        logger.info(truncateLog(`Processing image: ${filePath}`));
         return await processImage(filePath);
       } catch (error) {
-        logger.error(
-          truncateLog(
-            `Error processing image ${filePath}: ${(error as Error).message}`
-          )
-        );
         throw new Error(
           truncateLog(
             `Error processing image ${filePath}:` + (error as Error).message
@@ -165,7 +149,6 @@ export async function processImages(filePaths: string[]): Promise<imageMeta[]> {
     imageDetails.push(...batchResults);
 
     if (i + batchSize < filePaths.length) {
-      logger.info(truncateLog(`Batch processed. Delaying before next batch.`));
       await delay(2000); // Increased delay between batches to 2 seconds
     }
   }
