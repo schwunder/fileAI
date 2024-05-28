@@ -1,7 +1,3 @@
-import { readdir } from "fs/promises";
-import { join } from "path";
-import { string } from "zod";
-
 const jsonServerPort = "http://localhost:9000";
 
 type RequestParamsWithoutId = {
@@ -16,10 +12,13 @@ type RequestParamsWithId = {
   body?: any;
 };
 
-async function DB(params: RequestParamsWithoutId): Promise<void>;
-async function DB(params: RequestParamsWithId, id: string): Promise<void>;
+export async function DB(params: RequestParamsWithoutId): Promise<void>;
+export async function DB(
+  params: RequestParamsWithId,
+  id: string
+): Promise<void>;
 
-async function DB(
+export async function DB(
   {
     method,
     headers = { "Content-Type": "application/json" },
@@ -36,5 +35,4 @@ async function DB(
   });
   return response.json();
 }
-await DB({ method: "PATCH", body: { test: "patch" } }, "5");
-console.log(await DB({ method: "GET" }));
+//await DB({ method: "PATCH", body: { test: "patch" } }, "5");

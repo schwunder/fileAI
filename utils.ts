@@ -5,3 +5,60 @@ export const pipe = (initialValue: any, fns: any[]) => {
     return isPromise(acc) ? acc.then(fn) : fn(acc);
   }, initialValue);
 };
+import pino from "pino";
+const logger = pino();
+
+export const truncateLog = (
+  message: string,
+  maxLength: number = 500
+): string => {
+  return message.length > maxLength
+    ? message.substring(0, maxLength) + "..."
+    : message;
+};
+
+export const delay = (ms: number): Promise<void> => {
+  logger.info(truncateLog(`Delaying for ${ms} milliseconds`));
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+import axios from "axios";
+
+export const retryWithExponentialBackoff = async <T>(
+  func: (...args: any[]) => Promise<T>,
+  args: any[],
+  maxRetries = 3,
+  initialDelay = 2000
+): Promise<T> => {
+  let retries = 0;
+  let delayTime = initialDelay;
+
+  while (retries < maxRetries) {
+    try {
+      logger.info(
+        truncateLog(`Attempt ${retries + 1} for function ${func.name}`)
+      );
+      return await func(...args);
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 429) {
+        retries++;
+        logger.warn(
+          truncateLog(
+            `Rate limit hit. Retrying in ${delayTime} milliseconds (Attempt ${retries})`
+          )
+        );
+        await delay(delayTime);
+        delayTime *= 2;
+      } else {
+        logger.error(
+          truncateLog(
+            `Error in function ${func.name}: ${(error as Error).message}`
+          )
+        );
+        throw error;
+      }
+    }
+  }
+  logger.error(truncateLog("Max retries exceeded"));
+  throw new Error(truncateLog("Max retries exceeded"));
+};

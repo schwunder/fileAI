@@ -1,8 +1,15 @@
 <script>
   import ImageCard from "./lib/ImageCard.svelte";
-  import { getDB } from "./api";
+  import { DB } from "../db.ts"
+  import { addFolder } from "./api.js"
 
-  let db = getDB();
+  let db = DB({ method: "GET" });
+  let folderPath = "";
+
+  async function handleAddFolder() {
+    await addFolder(folderPath);
+    db = DB({ method: "GET" });
+  }
 </script>
 
 <header>
@@ -12,15 +19,22 @@
   {#await db}
     <p>Loading images...</p>
   {:then db}
-    <div class="container">
-      {#each db as metaData}
-        <ImageCard {metaData} />
-      {/each}
-    </div>
+    {#if db.length > 0}
+      <div class="container">
+        {#each db as metaData}
+          <ImageCard {metaData} />
+        {/each}
+      </div>
+    {:else}
+      <p>add a folder path please the press the button to add it</p>
+      <input bind:value={folderPath} type="text" placeholder="Enter folder path here" />
+      <button on:click={handleAddFolder}>Add</button>    
+    {/if}
   {:catch someError}
     <p>System error: {someError.message}.</p>
   {/await}
 </main>
+
 <footer>
   <p>&copy; 2023 Sample HTML Page. All rights reserved.</p>
 </footer>

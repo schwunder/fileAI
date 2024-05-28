@@ -3,6 +3,8 @@ import { readdir } from "fs/promises";
 import { join } from "path";
 import { pipe } from "./utils";
 import { processImages } from "./processImage";
+import { DB } from "./db.ts";
+import { truncateLog } from "./utils";
 
 // const absoluteDirectoryPath = "/Users/alien/Projects/testImages/";
 
@@ -12,7 +14,7 @@ export async function copyToDB(absoluteDirectoryPath: string) {
     const files = await readdir("db/media/");
     return files.map((file) => join("db/media/", file)); //todo: tag processed media in DB.
   } catch (error) {
-    throw new Error("Error copying files to DB:" + error);
+    throw new Error(truncateLog("Error copying files to DB:" + error));
   }
 }
 
@@ -25,27 +27,13 @@ export async function postImageDetails(
     timeStamp: number;
   }[]
 ) {
-  for (const details of imageDetails) {
-    try {
-      const response = await fetch("http://localhost:9000/images", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(details),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-    } catch (error) {
-      throw new Error("Error posting image:" + error);
-    }
-  }
+  return Promise.all(
+    imageDetails.map((imageDetail) => DB({ method: "POST", body: imageDetail }))
+  );
 }
 
-function processImagesFake(filePaths: string[]) {
-  const imageDetails = [
+async function processImagesFake(filePaths: string[]) {
+  return [
     {
       imgPath: "db/media/8.png",
       tags: ["fantasy", "mythology", "celestial", "vibrant"],
@@ -143,14 +131,12 @@ function processImagesFake(filePaths: string[]) {
       timeStamp: 1716383209954,
     },
   ];
-
-  imageDetails;
 }
 
 export async function folderToDB(absoluteDirectoryPath: string) {
   return await pipe(absoluteDirectoryPath, [
     copyToDB,
-    processImagesFake,
+    processImages,
     postImageDetails,
   ]);
 }

@@ -34,6 +34,9 @@ export async function writeData(title, description, tags) {
   });
   console.log("Data written successfully:", data);
 }
+export async function addFolder(absPath) {
+  await fetchAPI("/addFolder", "POST", { absPath });
+}
 
 export async function getDB() {
   return fetchAPI("/db");

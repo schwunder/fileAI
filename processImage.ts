@@ -2,45 +2,64 @@ import axios from "axios";
 import { z } from "zod";
 import { generateObject } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
-import { pipe } from "./utils";
+import { pipe, truncateLog } from "./utils";
+import { delay, retryWithExponentialBackoff } from "./utils";
+import pino from "pino";
+const logger = pino();
+
+logger.info(truncateLog(`Using OpenAI API Key: ${process.env.OPENAI_API_KEY}`));
 
 const maxDescriptionLength = 50;
 
-const getImageDescription =
-  (base64Img: string) =>
-  async (prompt: string): Promise<string> => {
-    try {
-      const res = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: prompt },
-                {
-                  type: "image_url",
-                  image_url: { url: `data:image/jpeg;base64,${base64Img}` },
-                },
-              ],
-            },
-          ],
-          max_tokens: maxDescriptionLength,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+const getImageDescription = async (
+  base64Img: string,
+  prompt: string
+): Promise<string> => {
+  const request = async (): Promise<string> => {
+    logger.info(truncateLog("Sending request to get image description"));
+    const res = await axios.post<{
+      choices: { message: { content: string } }[];
+    }>(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              {
+                type: "image_url",
+                image_url: { url: `data:image/jpeg;base64,${base64Img}` },
+              },
+            ],
           },
-        }
-      );
-      return res.data.choices[0].message.content;
-    } catch (error) {
-      throw new Error("Error getting image description:" + error);
-    }
+        ],
+        max_tokens: maxDescriptionLength,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+      }
+    );
+    logger.info(truncateLog("Received response from OpenAI"));
+    return res.data.choices[0].message.content;
   };
 
+  try {
+    return await retryWithExponentialBackoff(request, []);
+  } catch (error) {
+    const errorMessage = truncateLog(
+      "Error sending request to OpenAI: " + (error as Error).message
+    );
+    logger.error({ err: error }, errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+// make this take an array of descriptipons as an input and return an array of metadata
 const getMetadata = async (
   comment: string
 ): Promise<{ tags: string[]; title: string }> => {
@@ -52,22 +71,25 @@ const getMetadata = async (
     })) as { object: { tags: string[]; title: string } };
     return object;
   } catch (error) {
-    throw new Error("Error getting metadata:" + error);
+    throw new Error(
+      truncateLog("Error getting metadata: " + (error as Error).message)
+    );
   }
 };
 
 export async function processImage(imgPath: string): Promise<imageMeta> {
+  logger.info(truncateLog(`Starting to process image: ${imgPath}`));
   const absPath = `${import.meta.dir}/${imgPath}`;
 
   try {
     const description = await pipe(absPath, [
-      Bun.file,
+      (path: string) => Bun.file(path),
       async (file: File) => await file.arrayBuffer(),
-      Buffer.from,
+      (buffer: ArrayBuffer) => Buffer.from(buffer),
       (buffer: Buffer) => buffer.toString("base64"),
-      getImageDescription,
-      (getDescription: (prompt: string) => Promise<string>) =>
-        getDescription(
+      (base64Img: string) =>
+        getImageDescription(
+          base64Img,
           `What's in this image? Be concise and use under ${maxDescriptionLength} tokens`
         ),
     ]);
@@ -92,9 +114,14 @@ export async function processImage(imgPath: string): Promise<imageMeta> {
     });
     imageDataSchema.parse(imageData);
     // Return or save imageData as needed
+    logger.info(truncateLog(`Successfully processed image: ${imgPath}`));
     return imageData;
   } catch (error) {
-    throw new Error("Error processing image:" + error);
+    const errorMessage = truncateLog(
+      "Error processing image: " + (error as Error).message
+    );
+    logger.error({ err: error }, errorMessage);
+    throw new Error(errorMessage);
   }
 }
 
@@ -111,14 +138,37 @@ const imageMetaSchema = z.object({
 export type imageMeta = z.infer<typeof imageMetaSchema>;
 
 export async function processImages(filePaths: string[]): Promise<imageMeta[]> {
-  const imageDetails = [];
-  for (const filePath of filePaths) {
-    try {
-      const details = await processImage(filePath);
-      imageDetails.push(details);
-    } catch (error) {
-      throw new Error(`Error processing image ${filePath}:` + error);
+  const imageDetails: imageMeta[] = [];
+  const batchSize = 4; // Number of images to process in each batch
+
+  for (let i = 0; i < filePaths.length; i += batchSize) {
+    const batch = filePaths.slice(i, i + batchSize);
+    const batchPromises = batch.map(async (filePath) => {
+      try {
+        logger.info(truncateLog(`Processing image: ${filePath}`));
+        return await processImage(filePath);
+      } catch (error) {
+        logger.error(
+          truncateLog(
+            `Error processing image ${filePath}: ${(error as Error).message}`
+          )
+        );
+        throw new Error(
+          truncateLog(
+            `Error processing image ${filePath}:` + (error as Error).message
+          )
+        );
+      }
+    });
+
+    const batchResults = await Promise.all(batchPromises);
+    imageDetails.push(...batchResults);
+
+    if (i + batchSize < filePaths.length) {
+      logger.info(truncateLog(`Batch processed. Delaying before next batch.`));
+      await delay(2000); // Increased delay between batches to 2 seconds
     }
   }
+
   return imageDetails;
 }
