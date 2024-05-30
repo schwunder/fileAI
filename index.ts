@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { glob } from "glob";
 import { readFile } from "fs/promises";
 import { processImage } from "./processImage";
+import { fetchEmbedding } from "./semanticSearch";
 import mutateImageData from "./mutateImageData";
 import cors from "cors";
 import { folderToDB } from "./copyToDB";
@@ -54,6 +55,12 @@ app.post("/addFolder", async (req: Request, res: Response) => {
   const { absPath }: { absPath: string } = req.body;
   await folderToDB(absPath);
   res.send({ message: "Folder added" });
+});
+
+app.post("/fetchEmbedding", async (req: Request, res: Response) => {
+  const { searchString }: { searchString: string } = req.body;
+  const tokenEmbeddings = await fetchEmbedding(searchString);
+  res.send(tokenEmbeddings);
 });
 
 app.use((req: Request, res: Response) => {

@@ -42,3 +42,7 @@ export async function addFolder(absPath) {
 export async function getDB() {
   return fetchAPI("/db");
 }
+
+export async function fetchEmbedding(searchString) {
+  return fetchAPI("/fetchEmbedding", "POST", { searchString });
+}
