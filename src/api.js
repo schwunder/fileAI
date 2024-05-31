@@ -3,22 +3,20 @@ const API_BASE_URL = "http://localhost:3000";
 async function fetchAPI(endpoint, method = "GET", data = null) {
   const options = {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
   };
-
   if (data) {
     options.body = JSON.stringify(data);
   }
-
   const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
-
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
-
-  if (method === "GET") {
-    return response.json();
-  }
+  const jsonResponse = await response.json();
+  console.log(`API response from ${endpoint}:`, jsonResponse);
+  return jsonResponse;
 }
 
 export async function processImage(imageUrl) {

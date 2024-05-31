@@ -20,18 +20,23 @@
 
   async function updateImageDescriptions(dataBase) {
     const tokens = dataBase.map(metaData => metaData.description);
+    const embeddings = await Promise.all(tokens.map(async (token) => {
+      try {
+        const response = await fetchEmbedding(token);
+        console.log('Fetched embedding for search string:', token, response);
+        if (response && response.embedding) {
+          return response.embedding;  // Access the embedding from the structured response
+        } else {
+          throw new Error("Invalid response structure");
+        }
+      } catch (error) {
+        console.error(`Error fetching embedding for token "${token}":`, error);
+        return null;
+      }
+    }));
 
-    try {
-      // Fetch embeddings for all tokens in the array
-      tokenEmbeddings = await Promise.all(
-        tokens.map(async (token) => await fetchEmbedding(token))
-      );
-      console.log(`Fetched embeddings for all tokens`);
-      console.log("Truncated embeddings:", tokenEmbeddings);
-    } catch (error) {
-      console.log("Error fetching token embeddings:", error);
-      return;
-    }
+    tokenEmbeddings = embeddings.filter(embedding => embedding !== null);
+    console.log("Valid embeddings:", tokenEmbeddings);
   }
 </script>
 

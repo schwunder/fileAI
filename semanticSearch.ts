@@ -22,16 +22,43 @@ const openai = new OpenAI({
 export const fetchEmbedding = async (text: string): Promise<number[]> => {
   logger.info(`Fetching embedding for text: ${text}`);
 
-  const response = await openai.embeddings.create({
-    model: "text-embedding-ada-002",
-    input: text,
-    encoding_format: "float",
-  });
+  try {
+    const response = await openai.embeddings.create({
+      model: "text-embedding-ada-002",
+      input: text,
+      encoding_format: "float",
+    });
 
-  logger.info(`Received embedding for text: ${text}`);
+    logger.info(`Received response for text: ${text}`);
+    logger.info(`Response keys: ${Object.keys(response)}`);
+    logger.info(
+      `Response data keys: ${
+        response.data ? Object.keys(response.data) : "No data keys"
+      }`
+    );
 
-  // Return the embedding vector
-  return response.data[0].embedding;
+    if (
+      response &&
+      response.data &&
+      response.data[0] &&
+      response.data[0].embedding
+    ) {
+      const embedding = response.data[0].embedding;
+      logger.info(`Type of embedding: ${typeof embedding}`);
+      logger.info(`Is embedding an array: ${Array.isArray(embedding)}`);
+      if (Array.isArray(embedding)) {
+        logger.info(`Length of embedding array: ${embedding.length}`);
+        logger.info(`First element type: ${typeof embedding[0]}`);
+      }
+      logger.info(`Received embedding for text: ${text}`, embedding);
+      return embedding;
+    } else {
+      throw new Error("Invalid response structure");
+    }
+  } catch (error) {
+    logger.error(`Error fetching embedding for text: ${text}`, error);
+    throw error;
+  }
 };
 
 // Function to calculate cosine similarities between search embedding and token embeddings

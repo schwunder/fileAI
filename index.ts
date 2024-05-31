@@ -59,8 +59,14 @@ app.post("/addFolder", async (req: Request, res: Response) => {
 
 app.post("/fetchEmbedding", async (req: Request, res: Response) => {
   const { searchString }: { searchString: string } = req.body;
-  const tokenEmbeddings = await fetchEmbedding(searchString);
-  res.send(tokenEmbeddings);
+  try {
+    const embedding = await fetchEmbedding(searchString);
+    console.log(`Sending embedding for text: ${searchString}`, embedding);
+    res.json({ embedding }); // Use res.json to send a structured response
+  } catch (error) {
+    console.error(`Error fetching embedding for text: ${searchString}`, error);
+    res.status(500).json({ error: (error as Error).message });
+  }
 });
 
 app.use((req: Request, res: Response) => {
