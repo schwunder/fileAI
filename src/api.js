@@ -16,7 +16,7 @@ async function fetchAPI(endpoint, method = "GET", data = null) {
     throw new Error(`API request failed: ${response.status}`);
   }
 
-  if (method === "GET") {
+  if (method === "GET" || method === "POST") {
     return response.json();
   }
   return response;
@@ -45,6 +45,5 @@ export async function getDB() {
 }
 
 export async function fetchEmbedding(searchString) {
-  await fetchAPI("/fetchEmbedding", "POST", { searchString });
-  console.log("Fetched embedding for search string:", searchString);
+  return fetchAPI("/fetchEmbedding", "POST", { searchString });
 }

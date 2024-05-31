@@ -20,8 +20,6 @@ const openai = new OpenAI({
 
 // Function to fetch embedding for a given text using OpenAI API
 export const fetchEmbedding = async (text: string): Promise<number[]> => {
-  logger.info(`Fetching embedding for text: ${text}`);
-
   try {
     const response = await openai.embeddings.create({
       model: "text-embedding-ada-002",
@@ -29,35 +27,18 @@ export const fetchEmbedding = async (text: string): Promise<number[]> => {
       encoding_format: "float",
     });
 
-    logger.info(`Received response for text: ${text}`);
-    logger.info(`Response keys: ${Object.keys(response)}`);
-    logger.info(
-      `Response data keys: ${
-        response.data ? Object.keys(response.data) : "No data keys"
-      }`
-    );
-
     if (
       response &&
       response.data &&
       response.data[0] &&
       response.data[0].embedding
     ) {
-      const embedding = response.data[0].embedding;
-      logger.info(`Type of embedding: ${typeof embedding}`);
-      logger.info(`Is embedding an array: ${Array.isArray(embedding)}`);
-      if (Array.isArray(embedding)) {
-        logger.info(`Length of embedding array: ${embedding.length}`);
-        logger.info(`First element type: ${typeof embedding[0]}`);
-      }
-      logger.info(`Received embedding for text: ${text}`, embedding);
-      return embedding;
+      return response.data[0].embedding;
     } else {
       throw new Error("Invalid response structure");
     }
   } catch (error) {
-    logger.error(`Error fetching embedding for text: ${text}`, error);
-    throw error;
+    throw new Error(`Error fetching embedding for text: ${text}`);
   }
 };
 
@@ -95,23 +76,19 @@ const findClosest = (
   return closestToken;
 };
 
-// Redesigned findClosestToken function to sequentially process steps using pipe
+// Redesigned findClosestToken function to take an embedding instead of the search string
 export const findClosestToken = async (
-  searchString: string,
+  searchEmbedding: number[],
   tokenArray: string[],
   tokenEmbeddings: number[][]
 ): Promise<string> => {
-  logger.info(
-    `Starting process to find closest token for search string: ${searchString}`
-  );
+  logger.info(`Starting process to find closest token for provided embedding`);
 
   // Step 1: Use pipe function to process steps sequentially
-  return pipe(searchString, [
-    // Fetch embedding for the search string
-    (text: string) => fetchEmbedding(text),
+  return pipe(searchEmbedding, [
     // Calculate cosine similarities between search string embedding and token embeddings
-    (searchEmbedding: number[]) =>
-      calculateSimilarities(searchEmbedding, tokenEmbeddings, tokenArray),
+    (embedding: number[]) =>
+      calculateSimilarities(embedding, tokenEmbeddings, tokenArray),
     // Find and return the closest token based on highest similarity score
     (similarities: { token: string; similarity: number }[]) =>
       findClosest(similarities),
@@ -135,6 +112,7 @@ const main = async () => {
   }
 
   let tokenEmbeddings: number[][];
+  let searchEmbedding: number[];
 
   try {
     // Fetch embeddings for all tokens in the array
@@ -149,9 +127,18 @@ const main = async () => {
   }
 
   try {
+    // Fetch embedding for the search string
+    searchEmbedding = await fetchEmbedding(searchString);
+    logger.info(`Fetched embedding for search string`);
+  } catch (error) {
+    logger.error("Error fetching search string embedding:", error);
+    return;
+  }
+
+  try {
     // Find the closest token using the pre-fetched embeddings
     const closestToken = await findClosestToken(
-      searchString,
+      searchEmbedding,
       tokens,
       tokenEmbeddings
     );

@@ -1,46 +1,74 @@
 <script>
   import ImageCard from "./lib/ImageCard.svelte";
-  import { DB } from "../db.ts"
-  import { addFolder } from "./api.js"
+  import { DB } from "../db.ts";
+  import { addFolder, fetchEmbedding } from "./api.js";
+  import { findClosestToken, calculateSimilarities } from './utilities'; // Import necessary functions
 
-  let db = DB({ method: "GET" });
-  let folderPath = ""; // only available at first initialization. state mgmt?
-  let searchQuery = ""; // New variable for search query
+  let db;
+  let folderPath = "";
+  let searchQuery = "";
+  let metaDataArray = [];
+  let sortedMetaDataArray = [];
+
+  async function loadData() {
+    try {
+      const data = await DB({ method: "GET" });
+      metaDataArray = data;
+      sortedMetaDataArray = [...metaDataArray];
+    } catch (error) {
+      console.error("Error loading data:", error);
+    }
+  }
 
   async function handleAddFolder() {
     await addFolder(folderPath);
-    db = DB({ method: "GET" });
+    await loadData();
   }
 
-  function handleSearch() {
-    // Implement search logic here if needed
+  async function handleSearch() {
+    if (searchQuery.length <= 3) {
+      return;
+    }
+
     console.log("Search query:", searchQuery);
+    try {
+      const response = await fetchEmbedding(searchQuery);
+      console.log("Embedding response:", response); // Log the response
+      const searchEmbedding = response.embedding; // Adjust this line based on the actual response structure
+      if (!Array.isArray(searchEmbedding)) {
+        throw new Error("Invalid search embedding");
+      }
+      const similarities = calculateSimilarities(searchEmbedding, metaDataArray);
+      sortedMetaDataArray = similarities
+        .sort((a, b) => b.similarity - a.similarity)
+        .map(item => item.token);
+      console.log("Sorted metadata array:", sortedMetaDataArray);
+    } catch (error) {
+      console.error("Error in handleSearch:", error);
+    }
   }
 
+  // Load data initially
+  loadData();
 </script>
 
 <header>
   <h1>Images Gallery with Tags and Description and suggested Title</h1>
   <input bind:value={searchQuery} type="text" placeholder="Search images..." on:input={handleSearch} />
 </header>
+
 <main>
-  {#await db}
-    <p>Loading images...</p>
-  {:then db}
-    {#if db.length > 0}
-      <div class="container">
-        {#each db as metaData}
-          <ImageCard metaData={metaData} folderPath={folderPath} />
-        {/each}
-      </div>
-    {:else}
-      <p>add a folder path please the press the button to add it</p>
-      <input bind:value={folderPath} type="text" placeholder="Enter folder path here" />
-      <button on:click={handleAddFolder}>Add</button>    
-    {/if}
-  {:catch someError}
-    <p>System error: {someError.message}.</p>
-  {/await}
+  {#if sortedMetaDataArray.length > 0}
+    <div class="container">
+      {#each sortedMetaDataArray as metaData}
+        <ImageCard metaData={metaData} folderPath={folderPath} />
+      {/each}
+    </div>
+  {:else}
+    <p>add a folder path please then press the button to add it</p>
+    <input bind:value={folderPath} type="text" placeholder="Enter folder path here" />
+    <button on:click={handleAddFolder}>Add</button>    
+  {/if}
 </main>
 
 <footer>
@@ -56,10 +84,10 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 10px;
     width: 100%;
-    height: 100vh; /* Set the height to the viewport height */
+    height: 100vh;
     padding: 10px;
     box-sizing: border-box;
-    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-y: auto;
   }
   header {
     display: flex;
