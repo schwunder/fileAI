@@ -1,12 +1,11 @@
 <script>
   import ImageCard from "./lib/ImageCard.svelte";
   import { DB } from "../db.ts"
-  import { addFolder, fetchEmbedding } from "./api.js"
+  import { addFolder } from "./api.js"
 
   let db = DB({ method: "GET" });
   let folderPath = ""; // only available at first initialization. state mgmt?
   let searchQuery = ""; // New variable for search query
-  let tokenEmbeddings = [];
 
   async function handleAddFolder() {
     await addFolder(folderPath);
@@ -18,26 +17,6 @@
     console.log("Search query:", searchQuery);
   }
 
-  async function updateImageDescriptions(dataBase) {
-    const tokens = dataBase.map(metaData => metaData.description);
-    const embeddings = await Promise.all(tokens.map(async (token) => {
-      try {
-        const response = await fetchEmbedding(token);
-        console.log('Fetched embedding for search string:', token, response);
-        if (response && response.embedding) {
-          return response.embedding;  // Access the embedding from the structured response
-        } else {
-          throw new Error("Invalid response structure");
-        }
-      } catch (error) {
-        console.error(`Error fetching embedding for token "${token}":`, error);
-        return null;
-      }
-    }));
-
-    tokenEmbeddings = embeddings.filter(embedding => embedding !== null);
-    console.log("Valid embeddings:", tokenEmbeddings);
-  }
 </script>
 
 <header>
@@ -53,7 +32,6 @@
         {#each db as metaData}
           <ImageCard metaData={metaData} folderPath={folderPath} />
         {/each}
-        {updateImageDescriptions(db)}
       </div>
     {:else}
       <p>add a folder path please the press the button to add it</p>

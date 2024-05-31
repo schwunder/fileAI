@@ -3,20 +3,23 @@ const API_BASE_URL = "http://localhost:3000";
 async function fetchAPI(endpoint, method = "GET", data = null) {
   const options = {
     method,
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
   };
+
   if (data) {
     options.body = JSON.stringify(data);
   }
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    throw new Error(`API request failed: ${response.status}`);
   }
-  const jsonResponse = await response.json();
-  console.log(`API response from ${endpoint}:`, jsonResponse);
-  return jsonResponse;
+
+  if (method === "GET") {
+    return response.json();
+  }
+  return response;
 }
 
 export async function processImage(imageUrl) {
@@ -42,5 +45,6 @@ export async function getDB() {
 }
 
 export async function fetchEmbedding(searchString) {
-  return fetchAPI("/fetchEmbedding", "POST", { searchString });
+  await fetchAPI("/fetchEmbedding", "POST", { searchString });
+  console.log("Fetched embedding for search string:", searchString);
 }

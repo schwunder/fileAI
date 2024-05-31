@@ -4,14 +4,53 @@ import { generateObject } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { pipe, truncateLog } from "./utils";
 import { delay, retryWithExponentialBackoff } from "./utils";
+import OpenAI from "openai";
+import pino from "pino";
+
+// Setup Pino logger
+const logger = pino({
+  level: "info",
+  transport: {
+    target: "pino-pretty",
+    options: {
+      colorize: true,
+    },
+  },
+});
 
 const maxDescriptionLength = 50;
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+const fetchEmbedding = async (text: string): Promise<number[]> => {
+  try {
+    const response = await openai.embeddings.create({
+      model: "text-embedding-ada-002",
+      input: text,
+      encoding_format: "float",
+    });
+
+    if (
+      response &&
+      response.data &&
+      response.data[0] &&
+      response.data[0].embedding
+    ) {
+      return response.data[0].embedding;
+    } else {
+      throw new Error("Invalid response structure");
+    }
+  } catch (error) {
+    throw new Error(`Error fetching embedding for text: ${text}`);
+  }
+};
 
 const getImageDescription = async (
   base64Img: string,
   prompt: string
 ): Promise<string> => {
-  const request = async (): Promise<string> => {
+  try {
     const res = await axios.post<{
       choices: { message: { content: string } }[];
     }>(
@@ -40,10 +79,6 @@ const getImageDescription = async (
       }
     );
     return res.data.choices[0].message.content;
-  };
-
-  try {
-    return await retryWithExponentialBackoff(request, []);
   } catch (error) {
     const errorMessage = truncateLog(
       "Error sending request to OpenAI: " + (error as Error).message
@@ -70,9 +105,22 @@ const getMetadata = async (
   }
 };
 
+// Define the schema
+const imageMetaSchema = z.object({
+  imgPath: z.string(),
+  tags: z.array(z.string()),
+  title: z.string(),
+  description: z.string(),
+  timeStamp: z.number(),
+  embedding: z.array(z.number()), // Added embedding field
+});
+
+// Infer the type from the schema
+export type imageMeta = z.infer<typeof imageMetaSchema>;
+
 export async function processImage(imgPath: string): Promise<imageMeta> {
   const absPath = `${import.meta.dir}/${imgPath}`;
-
+  logger.info(`Processing image: ${absPath}`);
   try {
     const description = await pipe(absPath, [
       (path: string) => Bun.file(path),
@@ -85,7 +133,8 @@ export async function processImage(imgPath: string): Promise<imageMeta> {
           `What's in this image? Be concise and use under ${maxDescriptionLength} tokens`
         ),
     ]);
-
+    logger.info(`Processing image: ${description}`);
+    const embedding = await fetchEmbedding(description);
     const { tags, title } = await getMetadata(description);
 
     const imageData: imageMeta = {
@@ -94,17 +143,11 @@ export async function processImage(imgPath: string): Promise<imageMeta> {
       title,
       description,
       timeStamp: Date.now(),
+      embedding, // Added embedding field
     };
 
     // Validate with zod
-    const imageDataSchema = z.object({
-      imgPath: z.string(),
-      tags: z.array(z.string()),
-      title: z.string(),
-      description: z.string(),
-      timeStamp: z.number(),
-    });
-    imageDataSchema.parse(imageData);
+    imageMetaSchema.parse(imageData);
     // Return or save imageData as needed
     return imageData;
   } catch (error) {
@@ -115,41 +158,21 @@ export async function processImage(imgPath: string): Promise<imageMeta> {
   }
 }
 
-// Define the schema
-const imageMetaSchema = z.object({
-  imgPath: z.string(),
-  tags: z.array(z.string()),
-  title: z.string(),
-  description: z.string(),
-  timeStamp: z.number(),
-});
-
-// Infer the type from the schema
-export type imageMeta = z.infer<typeof imageMetaSchema>;
-
 export async function processImages(filePaths: string[]): Promise<imageMeta[]> {
   const imageDetails: imageMeta[] = [];
-  const batchSize = 4; // Number of images to process in each batch
-
-  for (let i = 0; i < filePaths.length; i += batchSize) {
-    const batch = filePaths.slice(i, i + batchSize);
-    const batchPromises = batch.map(async (filePath) => {
-      try {
-        return await processImage(filePath);
-      } catch (error) {
-        throw new Error(
-          truncateLog(
-            `Error processing image ${filePath}:` + (error as Error).message
-          )
-        );
-      }
-    });
-
-    const batchResults = await Promise.all(batchPromises);
-    imageDetails.push(...batchResults);
-
-    if (i + batchSize < filePaths.length) {
-      await delay(2000); // Increased delay between batches to 2 seconds
+  logger.info(`Processing images: ${filePaths}`);
+  for (const filePath of filePaths) {
+    try {
+      logger.info(`Processing image: ${filePath}`);
+      logger.info(process.env.OPENAI_API_KEY);
+      const imageData = await processImage(filePath);
+      imageDetails.push(imageData);
+    } catch (error) {
+      throw new Error(
+        truncateLog(
+          `Error processing image ${filePath}:` + (error as Error).message
+        )
+      );
     }
   }
 
