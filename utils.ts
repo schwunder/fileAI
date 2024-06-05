@@ -1,5 +1,23 @@
+import axios from "axios";
+import pino from "pino";
+const logger = pino();
+
+export const delay = (ms: number): Promise<void> => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+export const truncateLog = (
+  message: string,
+  maxLength: number = 500
+): string => {
+  return message.length > maxLength
+    ? message.substring(0, maxLength) + "..."
+    : message;
+};
+
 export const isPromise = (val: any): val is Promise<any> =>
   val && typeof val.then === "function";
+
 export const pipe = (initialValue: any, fns: any[]) => {
   return fns.reduce((acc, fn) => {
     return isPromise(acc) ? acc.then(fn) : fn(acc);
@@ -13,25 +31,6 @@ export const cosineSimilarity = (vecA: number[], vecB: number[]): number => {
   const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
   return dotProduct / (magnitudeA * magnitudeB);
 };
-
-import pino from "pino";
-const logger = pino();
-
-export const truncateLog = (
-  message: string,
-  maxLength: number = 500
-): string => {
-  return message.length > maxLength
-    ? message.substring(0, maxLength) + "..."
-    : message;
-};
-
-export const delay = (ms: number): Promise<void> => {
-  logger.info(truncateLog(`Delaying for ${ms} milliseconds`));
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};
-
-import axios from "axios";
 
 export const retryWithExponentialBackoff = async <T>(
   func: (...args: any[]) => Promise<T>,

@@ -2,26 +2,26 @@ import axios from "axios";
 import { z } from "zod";
 import { generateObject } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
-import { pipe, truncateLog } from "./utils";
-import { delay, retryWithExponentialBackoff } from "./utils";
+import { pipe, truncateLog, delay, retryWithExponentialBackoff } from "./utils";
 import OpenAI from "openai";
-import pino from "pino";
 
-// Setup Pino logger
-const logger = pino({
-  level: "info",
-  transport: {
-    target: "pino-pretty",
-    options: {
-      colorize: true,
-    },
-  },
-});
-
-const maxDescriptionLength = 50;
-const openai = new OpenAI({
+export const maxDescriptionLength = 50;
+export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Define the schema
+export const imageMetaSchema = z.object({
+  imgPath: z.string(),
+  tags: z.array(z.string()),
+  title: z.string(),
+  description: z.string(),
+  timeStamp: z.number(),
+  embedding: z.array(z.number()), // Added embedding field
+});
+
+// Infer the type from the schema
+export type imageMeta = z.infer<typeof imageMetaSchema>;
 
 const fetchEmbedding = async (text: string): Promise<number[]> => {
   try {
@@ -105,22 +105,8 @@ const getMetadata = async (
   }
 };
 
-// Define the schema
-const imageMetaSchema = z.object({
-  imgPath: z.string(),
-  tags: z.array(z.string()),
-  title: z.string(),
-  description: z.string(),
-  timeStamp: z.number(),
-  embedding: z.array(z.number()), // Added embedding field
-});
-
-// Infer the type from the schema
-export type imageMeta = z.infer<typeof imageMetaSchema>;
-
 export async function processImage(imgPath: string): Promise<imageMeta> {
   const absPath = `${import.meta.dir}/${imgPath}`;
-  logger.info(`Processing image: ${absPath}`);
   try {
     const description = await pipe(absPath, [
       (path: string) => Bun.file(path),
@@ -133,7 +119,6 @@ export async function processImage(imgPath: string): Promise<imageMeta> {
           `What's in this image? Be concise and use under ${maxDescriptionLength} tokens`
         ),
     ]);
-    logger.info(`Processing image: ${description}`);
     const embedding = await fetchEmbedding(description);
     const { tags, title } = await getMetadata(description);
 
@@ -160,11 +145,8 @@ export async function processImage(imgPath: string): Promise<imageMeta> {
 
 export async function processImages(filePaths: string[]): Promise<imageMeta[]> {
   const imageDetails: imageMeta[] = [];
-  logger.info(`Processing images: ${filePaths}`);
   for (const filePath of filePaths) {
     try {
-      logger.info(`Processing image: ${filePath}`);
-      logger.info(process.env.OPENAI_API_KEY);
       const imageData = await processImage(filePath);
       imageDetails.push(imageData);
     } catch (error) {
