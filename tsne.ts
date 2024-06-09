@@ -15,42 +15,53 @@ const logger = pino();
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 800;
 const COLOR_SCALE = d3.scaleOrdinal(d3.schemeCategory10);
-const IMAGE_FOLDER = "db/media";
-const NUM_IMAGES = 12;
+const IMAGE_DIRECTORY = "db/media";
+const MAX_IMAGES = 12;
 
 // Ensure canvas and context are properly initialized
 const canvas = createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
 const context = canvas.getContext("2d");
 if (!context) {
-  logger.error("Failed to get 2D context");
-  throw new Error("Failed to get 2D context");
+  throw new Error("Unable to obtain 2D context");
 }
 
-// Example usage of context.clearRect
+// Clear the canvas
 context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-// Read image files from the specified folder
-const readImageFiles = (folder: string, numImages: number) => {
-  logger.info(`Reading ${numImages} images from folder: ${folder}`);
-  return fs.readdirSync(folder).slice(0, numImages);
+/**
+ * Read image files from the specified folder.
+ * @param directory - The directory to read images from.
+ * @param maxImages - The maximum number of images to read.
+ * @returns An array of image file names.
+ */
+const getImageFiles = (directory: string, maxImages: number): string[] => {
+  return fs.readdirSync(directory).slice(0, maxImages);
 };
 
-const loadImagesFromFiles = (files: string[], folder: string) => {
-  logger.info(`Loading images from files: ${truncateLog(files.join(", "))}`);
+/**
+ * Load images from the specified file names and directory.
+ * @param fileNames - The names of the image files to load.
+ * @param directory - The directory where the image files are located.
+ * @returns A promise that resolves to an array of loaded images.
+ */
+const loadImages = (
+  fileNames: string[],
+  directory: string
+): Promise<Image[]> => {
   return Promise.all(
-    files.map((file) => {
-      const filePath = path.join(folder, file);
-      logger.info(`File path: ${filePath}, Type: ${typeof filePath}`);
+    fileNames.map((fileName) => {
+      const filePath = path.join(directory, fileName);
       return loadImage(filePath);
     })
   );
 };
 
-// Convert an Image object to a Tensor
-const convertImageToTensor = (image: Image) => {
-  logger.info(
-    `Converting image to tensor: ${truncateLog(image.src.toString())}`
-  );
+/**
+ * Convert an Image object to a Tensor.
+ * @param image - The image to convert.
+ * @returns A Tensor representation of the image.
+ */
+const imageToTensor = (image: Image): tf.Tensor => {
   const canvas = createCanvas(image.width, image.height);
   const ctx = canvas.getContext("2d");
   ctx.drawImage(image, 0, 0);
@@ -65,26 +76,37 @@ const convertImageToTensor = (image: Image) => {
     .div(tf.scalar(255));
 };
 
-// Stack multiple tensors into a single tensor
-const stackImageTensors = (tensors: tf.Tensor[]) => {
-  logger.info(`Stacking ${tensors.length} image tensors`);
+/**
+ * Stack multiple tensors into a single tensor.
+ * @param tensors - An array of tensors to stack.
+ * @returns A stacked 4D tensor.
+ */
+const stackTensors = (tensors: tf.Tensor[]): tf.Tensor4D => {
   return tf.stack(tensors) as tf.Tensor4D;
 };
 
-export const loadAndProcessImages = async (
-  folder: string,
-  numImages: number
+/**
+ * Process images from a directory and return a stacked tensor.
+ * @param directory - The directory to read images from.
+ * @param maxImages - The maximum number of images to process.
+ * @returns A promise that resolves to a stacked 4D tensor of image data.
+ */
+export const processImages = async (
+  directory: string,
+  maxImages: number
 ): Promise<tf.Tensor4D> => {
-  logger.info(`Loading and processing images from folder: ${folder}`);
-  const files = readImageFiles(folder, numImages);
-  const images = await loadImagesFromFiles(files, folder);
-  const tensors = images.map(convertImageToTensor);
-  return stackImageTensors(tensors);
+  const fileNames = getImageFiles(directory, maxImages);
+  const images = await loadImages(fileNames, directory);
+  const tensors = images.map(imageToTensor);
+  return stackTensors(tensors);
 };
 
-// Initialize t-SNE embedding using tsne-js
-export const initializeTsneEmbedding = (data: number[][]): number[][] => {
-  logger.info("Initializing t-SNE embedding");
+/**
+ * Initialize t-SNE embedding using tsne-js.
+ * @param data - The data to embed.
+ * @returns The t-SNE coordinates.
+ */
+export const initializeTsne = (data: number[][]): number[][] => {
   const tsne = new TSNE({
     dim: 2,
     perplexity: 30,
@@ -99,29 +121,15 @@ export const initializeTsneEmbedding = (data: number[][]): number[][] => {
   return tsne.getOutputScaled();
 };
 
-// Function to start t-SNE visualization and return the coordinates
-export const startTsneVisualization = async (): Promise<number[][]> => {
-  logger.info("Starting t-SNE visualization");
-  const numImages = NUM_IMAGES;
-  const folder = IMAGE_FOLDER;
-  const imageTensors = await loadAndProcessImages(folder, numImages);
+/**
+ * Function to start t-SNE visualization and return the coordinates.
+ * @returns A promise that resolves to the t-SNE coordinates.
+ */
+export const runTsneVisualization = async (): Promise<number[][]> => {
+  const maxImages = MAX_IMAGES;
+  const directory = IMAGE_DIRECTORY;
+  const imageTensors = await processImages(directory, maxImages);
   const imageData = imageTensors.arraySync();
   const flattenedData = imageData.map((img) => img.flat(2)); // Flatten the 3D array to 2D
-  const tsneCoordinates = initializeTsneEmbedding(flattenedData);
-
-  logger.info("t-SNE visualization complete");
-  return tsneCoordinates;
+  return initializeTsne(flattenedData);
 };
-
-// // Main function to execute the script
-// const main = async () => {
-//   try {
-//     const coordinates = await startTsneVisualization();
-//     console.log("t-SNE Coordinates:", coordinates);
-//   } catch (error) {
-//     logger.error("Error during t-SNE visualization:", error);
-//   }
-// };
-
-// // Execute the main function
-// main();
