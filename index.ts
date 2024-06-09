@@ -8,8 +8,10 @@ import mutateImageData from "./mutateImageData";
 import cors from "cors";
 import { folderToDB } from "./copyToDB";
 import { truncateLog } from "./utils";
+import { startTsneVisualization } from "./tsne";
+import pino from "pino";
+const logger = pino();
 
-// existing code...
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -64,6 +66,16 @@ app.post("/fetchEmbedding", async (req: Request, res: Response) => {
     res.json({ embedding }); // Use res.json to send a structured response
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post("/startTsneVisualization", async (req: Request, res: Response) => {
+  try {
+    const coordinates = await startTsneVisualization();
+    res.json({ coordinates }); // Send the coordinates as a JSON response
+  } catch (error) {
+    console.error("Error starting t-SNE visualization:", error);
+    res.status(500).send(truncateLog((error as Error).message));
   }
 });
 

@@ -47,3 +47,7 @@ export async function getDB() {
 export async function fetchEmbedding(searchString) {
   return fetchAPI("/fetchEmbedding", "POST", { searchString });
 }
+
+export async function startTsneVisualization() {
+  return fetchAPI("/startTsneVisualization", "POST");
+}

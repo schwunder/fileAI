@@ -1,14 +1,17 @@
 <script>
   import ImageCard from "./lib/ImageCard.svelte";
+  import Tsne from "./lib/Tsne.svelte";
   import { DB } from "../db.ts";
-  import { addFolder, fetchEmbedding } from "./api.js";
+  import { addFolder } from "./api.js";
   import { findClosestToken, calculateSimilarities } from './utilities'; // Import necessary functions
+
 
   let db;
   let folderPath = "";
   let searchQuery = "";
   let metaDataArray = [];
   let sortedMetaDataArray = [];
+  let isayso = false;
 
   async function loadData() {
     try {
@@ -58,6 +61,7 @@
 </header>
 
 <main>
+  {#if isayso}
   {#if sortedMetaDataArray.length > 0}
     <div class="container">
       {#each sortedMetaDataArray as metaData}
@@ -68,6 +72,9 @@
     <p>add a folder path please then press the button to add it</p>
     <input bind:value={folderPath} type="text" placeholder="Enter folder path here" />
     <button on:click={handleAddFolder}>Add</button>    
+  {/if}
+  {:else}
+    <Tsne />
   {/if}
 </main>
 

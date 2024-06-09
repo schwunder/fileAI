@@ -7,6 +7,7 @@
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
+    "types": ["vitest/globals"],
 
     // Bundler mode
     "moduleResolution": "bundler",
@@ -23,5 +24,11 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
-  }
+  },
+  "include": [
+    "src/**/*.d.ts",
+    "src/**/*.js",
+    "src/**/*.svelte",
+    "src/types/**/*.d.ts"
+  ]
 }
