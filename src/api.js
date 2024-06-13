@@ -24,7 +24,6 @@ async function fetchAPI(endpoint, method = "GET", data = null) {
 
 export async function processImage(imageUrl) {
   await fetchAPI("/processImage", "POST", { imgPath: imageUrl });
-  console.log("Image processed successfully");
 }
 
 export async function writeData(absPath, newName, comment, tags) {
@@ -34,7 +33,6 @@ export async function writeData(absPath, newName, comment, tags) {
     comment,
     tags,
   });
-  console.log("Data written successfully:", data);
 }
 export async function addFolder(absPath) {
   await fetchAPI("/addFolder", "POST", { absPath });
@@ -48,6 +46,6 @@ export async function fetchEmbedding(searchString) {
   return fetchAPI("/fetchEmbedding", "POST", { searchString });
 }
 
-export async function startTsneVisualization() {
-  return fetchAPI("/startTsneVisualization", "POST");
+export async function tsneVisualization() {
+  return fetchAPI("/tsneVisualization", "POST");
 }

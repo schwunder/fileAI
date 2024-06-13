@@ -71,6 +71,7 @@
     font-family: var(--font-family);
     animation: fadeIn 0.5s ease-in-out;
     max-height: 600px;
+    height: 800px;
   }
   .item:hover {
     transform: translateY(-10px) rotateY(3deg);

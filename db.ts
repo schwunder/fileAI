@@ -26,7 +26,6 @@ export async function DB(
   }: RequestParamsWithoutId | RequestParamsWithId,
   id?: string
 ): Promise<void> {
-  // Implementation here
   const idx = id ? `/${id}` : "";
   const response = await fetch(`${jsonServerPort}/images` + idx, {
     method,
@@ -35,4 +34,3 @@ export async function DB(
   });
   return response.json();
 }
-//await DB({ method: "PATCH", body: { test: "patch" } }, "5");

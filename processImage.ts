@@ -2,7 +2,7 @@ import axios from "axios";
 import { z } from "zod";
 import { generateObject } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
-import { pipe, truncateLog, delay, retryWithExponentialBackoff } from "./utils";
+import { pipe, truncateLog } from "./utils";
 import OpenAI from "openai";
 
 export const maxDescriptionLength = 50;
@@ -23,7 +23,7 @@ export const imageMetaSchema = z.object({
 // Infer the type from the schema
 export type imageMeta = z.infer<typeof imageMetaSchema>;
 
-const fetchEmbedding = async (text: string): Promise<number[]> => {
+export const fetchEmbedding = async (text: string): Promise<number[]> => {
   try {
     const response = await openai.embeddings.create({
       model: "text-embedding-ada-002",

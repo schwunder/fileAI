@@ -75,3 +75,66 @@ export const findClosestToken = async (
       findClosest(similarities),
   ]);
 };
+
+// Define the type for the coordinates
+type Coordinates = number[][];
+
+// Function to normalize t-SNE coordinates to fit within a specified range with a margin
+export function normalizeCoordinates(
+  coordinates: Coordinates,
+  rangeMin: number,
+  rangeMax: number,
+  marginPx: number,
+  canvasSize: number
+): Coordinates {
+  const margin = marginPx / canvasSize; // Convert pixel margin to normalized margin
+  const xValues = coordinates.map((coord) => coord[0]);
+  const yValues = coordinates.map((coord) => coord[1]);
+
+  const xMin = Math.min(...xValues);
+  const xMax = Math.max(...xValues);
+  const yMin = Math.min(...yValues);
+  const yMax = Math.max(...yValues);
+
+  return coordinates.map(([x, y]) => [
+    ((x - xMin) / (xMax - xMin)) * (rangeMax - rangeMin - 2 * margin) +
+      rangeMin +
+      margin,
+    ((y - yMin) / (yMax - yMin)) * (rangeMax - rangeMin - 2 * margin) +
+      rangeMin +
+      margin,
+  ]);
+}
+
+// Function to render the embedding on the canvas
+export function renderEmbedding(
+  context: CanvasRenderingContext2D,
+  coordinates: Coordinates,
+  imageSize: number,
+  canvas: HTMLCanvasElement
+): void {
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  coordinates.forEach((d, i) => {
+    const img = new Image();
+    img.src = `../../db/media/${i}.png`;
+    img.onload = () => {
+      // Adjust coordinates to prevent clipping
+      const x = Math.max(
+        imageSize / 2,
+        Math.min(d[0] * canvas.width, canvas.width - imageSize / 2)
+      );
+      const y = Math.max(
+        imageSize / 2,
+        Math.min(d[1] * canvas.height, canvas.height - imageSize / 2)
+      );
+
+      context.drawImage(
+        img,
+        x - imageSize / 2,
+        y - imageSize / 2,
+        imageSize,
+        imageSize
+      );
+    };
+  });
+}

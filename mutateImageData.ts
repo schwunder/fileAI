@@ -6,7 +6,7 @@ export default async function mutateImageData(
   comment: string,
   tags: string[]
 ) {
-  // set name of the_File to "${newName}"
+  //todo set name of the_File to "${newName}"
   Bun.spawnSync([
     "osascript",
     "-e",

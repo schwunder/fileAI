@@ -3,10 +3,9 @@
   import Tsne from "./lib/Tsne.svelte";
   import { DB } from "../db.ts";
   import { addFolder } from "./api.js";
-  import { findClosestToken, calculateSimilarities } from './utilities'; // Import necessary functions
+  import { calculateSimilarities } from './utilities'; 
+  import { fetchEmbedding } from "./api.js";
 
-
-  let db;
   let folderPath = "";
   let searchQuery = "";
   let metaDataArray = [];
@@ -23,21 +22,15 @@
     }
   }
 
-  async function handleAddFolder() {
+  const handleAddFolder = async () => {
     await addFolder(folderPath);
     await loadData();
-  }
+  };
 
-  async function handleSearch() {
-    if (searchQuery.length <= 3) {
-      return;
-    }
-
-    console.log("Search query:", searchQuery);
+  const handleSearch = async () => {
     try {
       const response = await fetchEmbedding(searchQuery);
-      console.log("Embedding response:", response); // Log the response
-      const searchEmbedding = response.embedding; // Adjust this line based on the actual response structure
+      const searchEmbedding = response.embedding;
       if (!Array.isArray(searchEmbedding)) {
         throw new Error("Invalid search embedding");
       }
@@ -45,11 +38,10 @@
       sortedMetaDataArray = similarities
         .sort((a, b) => b.similarity - a.similarity)
         .map(item => item.token);
-      console.log("Sorted metadata array:", sortedMetaDataArray);
     } catch (error) {
       console.error("Error in handleSearch:", error);
     }
-  }
+  };
 
   // Load data initially
   loadData();
@@ -57,24 +49,25 @@
 
 <header>
   <h1>Images Gallery with Tags and Description and suggested Title</h1>
-  <input bind:value={searchQuery} type="text" placeholder="Search images..." on:input={handleSearch} />
+  <button on:click={() => { isayso = !isayso; }}>{isayso ? "Show Images" : "Show TSNE"}</button>
+  <input bind:value={searchQuery} type="text" placeholder="Search images..." on:keydown={(event) => { if (event.key === 'Enter') handleSearch(); }} />
 </header>
 
 <main>
   {#if isayso}
-  {#if sortedMetaDataArray.length > 0}
-    <div class="container">
-      {#each sortedMetaDataArray as metaData}
-        <ImageCard metaData={metaData} folderPath={folderPath} />
-      {/each}
-    </div>
-  {:else}
-    <p>add a folder path please then press the button to add it</p>
-    <input bind:value={folderPath} type="text" placeholder="Enter folder path here" />
-    <button on:click={handleAddFolder}>Add</button>    
-  {/if}
-  {:else}
     <Tsne />
+  {:else}
+    {#if sortedMetaDataArray.length > 0}
+      <div class="container">
+        {#each sortedMetaDataArray as metaData}
+          <ImageCard metaData={metaData} folderPath={folderPath} />
+        {/each}
+      </div>
+    {:else}
+      <p>add a folder path please then press the button to add it</p>
+      <input bind:value={folderPath} type="text" placeholder="Enter folder path here" />
+      <button on:click={handleAddFolder}>Add</button>    
+    {/if}
   {/if}
 </main>
 
@@ -103,6 +96,11 @@
   }
   header input {
     padding: 5px;
+    font-size: 1rem;
+  }
+  header button {
+    margin-right: 10px;
+    padding: 5px 10px;
     font-size: 1rem;
   }
 </style>

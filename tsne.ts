@@ -1,20 +1,13 @@
 import * as tf from "@tensorflow/tfjs-node";
 import "@tensorflow/tfjs-backend-webgl";
-import * as d3 from "d3";
 import * as fs from "fs";
 import * as path from "path";
-import { createCanvas, loadImage, Canvas, Image } from "@napi-rs/canvas";
+import { createCanvas, loadImage, Image } from "@napi-rs/canvas";
 import TSNE from "tsne-js";
-import pino from "pino";
-import { truncateLog } from "./utils"; // Adjust the path as necessary
-
-// Initialize Pino logger
-const logger = pino();
 
 // Constants
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 800;
-const COLOR_SCALE = d3.scaleOrdinal(d3.schemeCategory10);
 const IMAGE_DIRECTORY = "db/media";
 const MAX_IMAGES = 12;
 
