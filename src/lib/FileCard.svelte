@@ -1,10 +1,10 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button";
-    import { Label } from "$lib/components/ui/label";
     import { Input } from "$lib/components/ui/input";
     import * as Card from "$lib/components/ui/card";
     import { AspectRatio } from "$lib/components/ui/aspect-ratio";
     import { ToggleGroup, ToggleGroupItem } from "$lib/components/ui/toggle-group";
+    import { Checkbox } from "$lib/components/ui/checkbox";
     import { processImage, writeData } from "../api";
   
     export let metaData: {
@@ -13,65 +13,43 @@
       description: string;
       tags: string[];
     };
-    export const folderPath = '';
+    export let onImageClick: (imgUrl: string, event: MouseEvent) => void = () => {};
+
     let selectedTag: string | undefined = undefined;
+    let isChecked: boolean = false;
+
+    function handleClick(event: MouseEvent) {
+      onImageClick(metaData.imgPath, event);
+    }
   </script>
   
-  <Card.Root>
-    <Card.Header>
+  <Card.Root class="max-w-[450px] mx-auto p-4 bg-white rounded-md shadow-md">
+    <Card.Header class="flex items-center">
       <Card.Title>{metaData.imgPath.split("/").pop()}</Card.Title>
-      <input type="checkbox" class="ml-auto" />
+      <Checkbox class="ml-auto" bind:checked={isChecked} />
     </Card.Header>
     <Card.Content>
-      <AspectRatio ratio={16 / 9} class="bg-muted">
-        <img src={`http://localhost:3000/${metaData.imgPath}`} alt={""} class="rounded-md object-cover" />
+      <AspectRatio ratio={16 / 9} class="bg-muted w-full">
+        <Button on:click={(e) => { processImage(metaData.imgPath); handleClick(e); }} variant="ghost" class="w-full h-full">
+          <img src={`http://localhost:3000/${metaData.imgPath}`} alt={""} class="rounded-md object-contain w-full h-full" />
+        </Button>
       </AspectRatio>
-      <Label for="title" class="mt-4">Title</Label>
-      <Input id="title" bind:value={metaData.title} class="title" />
-      <Label for="tags" class="mt-4">Tags</Label>
-      <ToggleGroup type="single" bind:value={selectedTag} class="tags mt-4">
+      <Input id="title" bind:value={metaData.title} class="title mt-4 w-full" contenteditable="true" />
+      <ToggleGroup type="single" bind:value={selectedTag} class="tags mt-4 w-full">
         {#each metaData.tags as tag}
-          <ToggleGroupItem value={tag} class="tag-button">
+          <ToggleGroupItem value={tag} class="tag-button {selectedTag === tag ? 'selected' : ''} px-2 py-1 m-1 border rounded">
             {tag}
           </ToggleGroupItem>
         {/each}
       </ToggleGroup>
-      <Label for="description" class="mt-4">Description</Label>
-      <Input id="description" bind:value={metaData.description} class="description" />
+      <Input id="description" bind:value={metaData.description} class="description mt-4 w-full" contenteditable="true" />
     </Card.Content>
-    <Card.Footer>
-      <Button
-        variant="default"
-        class="write-button"
-        on:click={() => {
-          writeData(metaData.imgPath, metaData.title, metaData.description, metaData.tags);
-        }}
-      >
+    <Card.Footer class="flex justify-end mt-4">
+      <Button variant="default" class="write-button mr-2" on:click={() => writeData(metaData.imgPath, metaData.title, metaData.description, metaData.tags)}>
         Write
       </Button>
-      <Button variant="secondary" class="discard-button" on:click={() => {}}>
+      <Button variant="secondary" class="discard-button">
         Discard
       </Button>
     </Card.Footer>
   </Card.Root>
-  
-  <style>
-    .tags {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-  
-    .tag-button[data-state="on"] {
-      background-color: var(--danger-color);
-    }
-  
-    img {
-      max-width: 100%;
-      max-height: 200px;
-      object-fit: contain;
-      margin-bottom: 15px;
-      border-radius: 10px;
-    }
-  </style>

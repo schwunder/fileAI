@@ -1,19 +1,20 @@
 <script>
   import "./app.css";
-  import ImageCard from "./lib/ImageCard.svelte";
   import Tsne from "./lib/Tsne.svelte";
-  import CarouselTest from "./lib/CarouselTest.svelte";
-  import DaisyCarousel from "./lib/DaisyCarousel.svelte";
   import { DB } from "../db.ts";
   import { addFolder } from "./api.js";
   import { calculateSimilarities } from "./utilities";
   import { fetchEmbedding } from "./api.js";
+  import CardCarousel from "./lib/CardCarousel.svelte";
   
   let folderPath = "";
   let searchQuery = "";
   let metaDataArray = [];
   let sortedMetaDataArray = [];
   let isayso = false;
+
+  // Ensure sortedMetaDataArray is always an array
+  $: sortedMetaDataArray = Array.isArray(sortedMetaDataArray) ? sortedMetaDataArray : [];
 
   async function loadData() {
       try {
@@ -66,7 +67,9 @@
     <Tsne></Tsne>
   {:else}
     {#if sortedMetaDataArray.length > 0}
-      <CarouselTest></CarouselTest>
+    <div class="container">
+      <CardCarousel {sortedMetaDataArray} {folderPath}></CardCarousel>
+    </div>
     {:else}
       <p class="text-red-500">Add a folder path please then press the button to add it</p>
       <input class="p-2 rounded border" bind:value="{folderPath}" type="text" placeholder="Enter folder path here" />
@@ -78,8 +81,6 @@
 <footer class="bg-gray-800 text-white p-4 text-center">
   <p>© 2023 Sample HTML Page. All rights reserved.</p>
 </footer>
-
-
 
 <style>
   :global(body) {
