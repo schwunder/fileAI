@@ -6,6 +6,10 @@ import { processImages } from "./processImage";
 import { DB } from "./db.ts";
 import { truncateLog } from "./utils";
 
+//todo given tags in payload
+//todo given tags in payload
+//todo add other file types and categorize ui based on file type
+//also just display pdf like image
 export async function copyToDB(absoluteDirectoryPath: string) {
   try {
     await $`cp ${absoluteDirectoryPath}/* db/media/`;
