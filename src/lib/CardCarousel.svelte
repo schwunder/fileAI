@@ -4,6 +4,8 @@
   import { Button } from "$lib/components/ui/button";
   import Autoplay from "embla-carousel-autoplay";
   import AutoHeight from "embla-carousel-auto-height";
+  import ClassNames from 'embla-carousel-class-names';
+  import Fade from 'embla-carousel-fade';
   import { tweened } from 'svelte/motion';
   import { cubicOut } from 'svelte/easing';
   import { onMount } from 'svelte';
@@ -73,7 +75,14 @@
 
 <Carousel.Root bind:api plugins={[
   Autoplay({ delay: 2000 }),
-  AutoHeight()
+  AutoHeight(),
+  ClassNames({
+    snapped: 'is-snapped',
+    inView: 'is-in-view',
+    draggable: 'is-draggable',
+    dragging: 'is-dragging'
+  }),
+  Fade()
 ]}>
   <div class="text-xl font-bold mb-4">{folderPath}</div>
   <div class="text-sm mb-2">Slide {$current} of {count}</div>
@@ -84,12 +93,14 @@
       <Carousel.Item class="carousel-item pl-2 md:pl-4"
                      style="opacity: {1 - Math.abs($current - (i + 1)) * 0.5}"
                      on:click={(e) => handleClick(metaData.imgPath, e)}>
-        <FileCard {metaData} onImageClick={handleClick} />
+        <div class:is-prev={i === $current - 2} class:is-next={i === $current}>
+          <FileCard {metaData} onImageClick={handleClick} />
+        </div>
       </Carousel.Item>
     {/each}
   </Carousel.Content>
   <Carousel.Previous class="bg-blue-500 text-white p-2 rounded absolute left-2 top-1/2 transform -translate-y-1/2" />
-  <Carousel.Next class="bg-blue-500 text-whit e p-2 rounded absolute right-2 top-1/2 transform -translate-y-1/2" />
+  <Carousel.Next class="bg-blue-500 text-white p-2 rounded absolute right-2 top-1/2 transform -translate-y-1/2" />
 </Carousel.Root>
 
 <!-- Active Image Overlay -->
@@ -107,3 +118,4 @@
     </AspectRatio>
   </div>
 {/if}
+
