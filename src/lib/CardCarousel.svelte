@@ -44,7 +44,7 @@
     }
   });
 
-  function toggleAutoplay() {
+  const toggleCarouselAutoplay = () => {
     autoplayEnabled = !autoplayEnabled;
     if (api) {
       if (autoplayEnabled) {
@@ -53,23 +53,23 @@
         api.plugins().autoplay.stop();
       }
     }
-  }
+  };
 
-  function handleClick(imgUrl: string, event: Event) {
+  const setActiveImage = (imgUrl: string, event: Event) => {
     const mouseEvent = event as MouseEvent;
     activeImg = imgUrl;
     const rect = (mouseEvent.target as HTMLElement).getBoundingClientRect();
     activeImgPosition = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
-  }
+  };
 
-  function handleClose() {
+  const closeActiveImageOverlay = () => {
     console.log("Closing the active image overlay");
     activeImg = null;
-  }
+  };
 </script>
 
 <!-- Autoplay Toggle Button -->
-<Button on:click={toggleAutoplay} class="bg-green-500 text-white p-2 rounded mt-2">
+<Button on:click={toggleCarouselAutoplay} class="bg-green-500 text-white p-2 rounded mt-2">
   {autoplayEnabled ? 'Stop Autoplay' : 'Start Autoplay'}
 </Button>
 
@@ -92,9 +92,9 @@
     {#each sortedMetaDataArray as metaData, i}
       <Carousel.Item class="carousel-item pl-2 md:pl-4"
                      style="opacity: {1 - Math.abs($current - (i + 1)) * 0.5}"
-                     on:click={(e) => handleClick(metaData.imgPath, e)}>
+                     on:click={(e) => setActiveImage(metaData.imgPath, e)}>
         <div class:is-prev={i === $current - 2} class:is-next={i === $current}>
-          <FileCard {metaData} onImageClick={handleClick} />
+          <FileCard {metaData} onImageClick={setActiveImage} />
         </div>
       </Carousel.Item>
     {/each}
@@ -107,7 +107,7 @@
 {#if activeImg}
   <div class="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
     <AspectRatio ratio={16 / 9} class="bg-muted w-1/2 h-1/2 mx-auto">
-      <Button on:click={handleClose} class="w-full h-full">
+      <Button on:click={closeActiveImageOverlay} class="w-full h-full">
         <!-- svelte-ignore a11y-img-redundant-alt -->
         <img
           src={`http://localhost:3000/${activeImg}`}
@@ -118,4 +118,3 @@
     </AspectRatio>
   </div>
 {/if}
-

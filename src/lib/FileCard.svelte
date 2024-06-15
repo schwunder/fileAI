@@ -18,9 +18,6 @@
     let selectedTag: string | undefined = undefined;
     let isChecked: boolean = false;
 
-    function handleClick(event: MouseEvent) {
-      onImageClick(metaData.imgPath, event);
-    }
   </script>
   
   <Card.Root class="max-w-[450px] mx-auto p-4 bg-white rounded-md shadow-md">
@@ -30,25 +27,25 @@
     </Card.Header>
     <Card.Content>
       <AspectRatio ratio={16 / 9} class="bg-muted w-full">
-        <Button on:click={(e) => { processImage(metaData.imgPath); handleClick(e); }} variant="ghost" class="w-full h-full">
+        <Button on:click={(e) => { processImage(metaData.imgPath); onImageClick(metaData.imgPath, e); }} variant="ghost" class="w-full h-full">
           <img src={`http://localhost:3000/${metaData.imgPath}`} alt={""} class="rounded-md object-contain w-full h-full" />
         </Button>
       </AspectRatio>
-      <Input id="title" bind:value={metaData.title} class="title mt-4 w-full" contenteditable="true" />
-      <ToggleGroup type="single" bind:value={selectedTag} class="tags mt-4 w-full">
+      <Input id="title" bind:value={metaData.title} class="mt-4 w-full" contenteditable="true" />
+      <ToggleGroup type="single" bind:value={selectedTag} class="mt-4 w-full">
         {#each metaData.tags as tag}
-          <ToggleGroupItem value={tag} class="tag-button {selectedTag === tag ? 'selected' : ''} px-2 py-1 m-1 border rounded">
+          <ToggleGroupItem value={tag} class="{selectedTag === tag ? 'selected' : ''} px-2 py-1 m-1 border rounded">
             {tag}
           </ToggleGroupItem>
         {/each}
       </ToggleGroup>
-      <Input id="description" bind:value={metaData.description} class="description mt-4 w-full" contenteditable="true" />
+      <Input id="description" bind:value={metaData.description} class="mt-4 w-full" contenteditable="true" />
     </Card.Content>
     <Card.Footer class="flex justify-end mt-4">
-      <Button variant="default" class="write-button mr-2" on:click={() => writeData(metaData.imgPath, metaData.title, metaData.description, metaData.tags)}>
+      <Button variant="default" class="mr-2" on:click={() => writeData(metaData.imgPath, metaData.title, metaData.description, metaData.tags)}>
         Write
       </Button>
-      <Button variant="secondary" class="discard-button">
+      <Button variant="secondary">
         Discard
       </Button>
     </Card.Footer>

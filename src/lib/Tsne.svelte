@@ -2,6 +2,7 @@
   import { tick } from 'svelte';
   import { tsneVisualization } from '../api'; 
   import { normalizeCoordinates, renderEmbedding } from '../utilities';
+  import { Button } from "$lib/components/ui/button";
 
   let canvas;
   let showCanvas = false;
@@ -36,7 +37,7 @@
 </script>
 
   {#if showButton}
-    <button on:click={handleTsneVisualization}>Start t-SNE Visualization</button>
+    <Button on:click={handleTsneVisualization}>Start t-SNE Visualization</Button>
   {/if}
   {#if showCanvas}
     <canvas bind:this={canvas} width={canvasSize} height={canvasSize}></canvas>
