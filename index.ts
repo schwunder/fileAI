@@ -9,6 +9,7 @@ import cors from "cors";
 import { folderToDB } from "./copyToDB";
 import { truncateLog } from "./utils";
 import { runTsneVisualization } from "./tsne";
+// import { assignTags } from "./processImageCompare";
 
 const app = express();
 app.use(cors());
@@ -83,6 +84,19 @@ app.post("/fetchEmbedding", async (req: Request, res: Response) => {
     res.status(500).send({
       message: `Error fetching embedding:
       ${truncateLog((error as Error).message)} `,
+    });
+  }
+});
+
+app.post("/assignTags", async (req: Request, res: Response) => {
+  try {
+    const { tags }: { tags: string[] } = req.body;
+    //await assignTags(tags);
+    res.status(200).send({ message: "Tags assigned" });
+  } catch (error) {
+    res.status(500).send({
+      message: `Error assigning tags:
+      ${truncateLog((error as Error).message)}`,
     });
   }
 });

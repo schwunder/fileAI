@@ -49,3 +49,7 @@ export async function fetchEmbedding(searchString) {
 export async function tsneVisualization() {
   return fetchAPI("/tsneVisualization", "POST");
 }
+
+export async function filterTags(description, samples) {
+  return fetchAPI("/filterTags", "POST", { description, samples });
+}

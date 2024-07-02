@@ -5,7 +5,7 @@
     import { AspectRatio } from "$lib/components/ui/aspect-ratio";
     import { ToggleGroup, ToggleGroupItem } from "$lib/components/ui/toggle-group";
     import { Checkbox } from "$lib/components/ui/checkbox";
-    import { processImage, writeData } from "../api";
+    import { processImage, writeData, filterTags } from "../api";
   
     export let metaData: {
       imgPath: string;
@@ -14,10 +14,23 @@
       tags: string[];
     };
     export let onImageClick: (imgUrl: string, event: MouseEvent) => void = () => {};
-
-    let selectedTag: string | undefined = undefined;
+    let selectedTags: string[] = [];
     let isChecked: boolean = false;
-
+    const sampleTags = [
+    "screenshot",
+    "passport",
+    "document",
+    "bill",
+    "family",
+    "city",
+    "vacation",
+    "landscape",
+    "pet",
+    "art",
+    "male",
+    "female",
+  ];
+// patch db on assign tags from samples
   </script>
   
   <Card.Root class="max-w-[450px] mx-auto p-4 bg-white rounded-md shadow-md">
@@ -32,9 +45,9 @@
         </Button>
       </AspectRatio>
       <Input id="title" bind:value={metaData.title} class="mt-4 w-full" contenteditable="true" />
-      <ToggleGroup type="single" bind:value={selectedTag} class="mt-4 w-full">
+      <ToggleGroup type="multiple" bind:value={selectedTags} class="mt-4 w-full">
         {#each metaData.tags as tag}
-          <ToggleGroupItem value={tag} class="{selectedTag === tag ? 'selected' : ''} px-2 py-1 m-1 border rounded">
+          <ToggleGroupItem value={tag} class="{selectedTags.includes(tag) ? 'selected' : ''} px-2 py-1 m-1 border rounded">
             {tag}
           </ToggleGroupItem>
         {/each}
@@ -45,7 +58,10 @@
       <Button variant="default" class="mr-2" on:click={() => writeData(metaData.imgPath, metaData.title, metaData.description, metaData.tags)}>
         Write
       </Button>
-      <Button variant="secondary">
+      <Button variant="secondary" class="mr-2" on:click={() => filterTags(metaData.description, metaData.tags)}>
+        Assign tags from samples
+      </Button>
+      <Button variant="ghost">
         Discard
       </Button>
     </Card.Footer>

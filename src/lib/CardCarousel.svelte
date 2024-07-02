@@ -23,7 +23,7 @@
   let api: CarouselAPI;
   let count = 0;
   let current = tweened(0, { duration: 400, easing: cubicOut });
-  let autoplayEnabled = true;
+  let autoplayEnabled = false; // Set to false by default
   let activeImg: string | null = null;
   let isCarouselActive = true;
   let activeImgPosition = { top: 0, left: 0, width: 0, height: 0 };
@@ -74,7 +74,7 @@
 </Button>
 
 <Carousel.Root bind:api plugins={[
-  Autoplay({ delay: 2000 }),
+  ...(autoplayEnabled ? [Autoplay({ delay: 2000 })] : []),
   AutoHeight(),
   ClassNames({
     snapped: 'is-snapped',

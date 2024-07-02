@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import "./app.css";
   import Tsne from "./lib/Tsne.svelte";
   import { DB } from "../db.ts";
@@ -6,35 +6,63 @@
   import { calculateSimilarities } from "./utilities";
   import { fetchEmbedding } from "./api.js";
   import CardCarousel from "./lib/CardCarousel.svelte";
-  
-  let folderPath = "";
-  let searchQuery = "";
-  let metaDataArray = [];
-  let sortedMetaDataArray = [];
-  let isayso = false;
+  import { Button } from "$lib/components/ui/button";
+  import { Input } from "$lib/components/ui/input";
+  import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
+
+  interface MetaData {
+    embedding: number[];
+    imgPath: string;
+    tags: string[];
+    title: string;
+    description: string;
+    timeStamp: number;
+  }
+
+  let folderPath: string = "";
+  let searchQuery: string = "";
+  let metaDataArray: MetaData[] = [];
+  let sortedMetaDataArray: MetaData[] = [];
+  let isayso: boolean = false;
+  let selectedTags: string[] = [];
 
   // Ensure sortedMetaDataArray is always an array
   $: sortedMetaDataArray = Array.isArray(sortedMetaDataArray) ? sortedMetaDataArray : [];
 
-  async function loadData() {
+  function isMetaDataArray(data: any): data is MetaData[] {
+      return Array.isArray(data) && data.every(item => 
+          'embedding' in item && 
+          'imgPath' in item && 
+          'tags' in item && 
+          'title' in item && 
+          'description' in item && 
+          'timeStamp' in item
+      );
+  }
+
+  async function loadData(): Promise<void> {
       try {
           const data = await DB({
               method: "GET"
           });
 
-          metaDataArray = data;
-          sortedMetaDataArray = [...metaDataArray];
+          if (isMetaDataArray(data)) {
+              metaDataArray = data;
+              sortedMetaDataArray = [...metaDataArray];
+          } else {
+              throw new Error("Invalid data format");
+          }
       } catch (error) {
           console.error("Error loading data:", error);
       }
   }
 
-  const handleAddFolder = async () => {
+  const handleAddFolder = async (): Promise<void> => {
       await addFolder(folderPath);
       await loadData();
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (): Promise<void> => {
       try {
           const response = await fetchEmbedding(searchQuery);
           const searchEmbedding = response.embedding;
@@ -50,16 +78,31 @@
       }
   };
 
+  const sampleTags: string[] = [
+    "screenshot",
+    "passport",
+    "document",
+    "bill",
+    "family",
+    "city",
+    "vacation",
+    "landscape",
+    "pet",
+    "art",
+    "male",
+    "female",
+  ];
+
   // Load data initially
   loadData();
 </script>
 
 <header class="bg-blue-500 text-white p-4 flex justify-between items-center">
   <h1 class="text-2xl font-bold">Images Gallery with Tags and Description and Suggested Title</h1>
-  <button class="bg-white text-blue-500 px-4 py-2 rounded" on:click="{() => { isayso = !isayso; }}">
+  <Button class="bg-white text-blue-500 px-4 py-2 rounded" on:click="{() => { isayso = !isayso; }}">
     {isayso ? "Show Images" : "Show TSNE"}
-  </button>
-  <input class="p-2 rounded border" bind:value="{searchQuery}" type="text" placeholder="Search images..." on:keydown="{(event) => { if (event.key === 'Enter') handleSearch(); }}" />
+  </Button>
+  <Input class="p-2 rounded border" bind:value="{searchQuery}" type="text" placeholder="Search images..." on:keydown="{(event) => { if (event.key === 'Enter') handleSearch(); }}" />
 </header>
 
 <main class="p-4">
@@ -67,15 +110,23 @@
     <Tsne></Tsne>
   {:else}
     {#if sortedMetaDataArray.length > 0}
-    <div class="container">
       <CardCarousel {sortedMetaDataArray} {folderPath}></CardCarousel>
-    </div>
     {:else}
       <p class="text-red-500">Add a folder path please then press the button to add it</p>
-      <input class="p-2 rounded border" bind:value="{folderPath}" type="text" placeholder="Enter folder path here" />
-      <button class="bg-blue-500 text-white px-4 py-2 rounded mt-2" on:click="{handleAddFolder}">Add</button>    
+      <Input class="p-2 rounded border" bind:value="{folderPath}" type="text" placeholder="Enter folder path here" />
+      <Button class="bg-blue-500 text-white px-4 py-2 rounded mt-2" on:click="{handleAddFolder}">Add</Button>    
     {/if}
   {/if}
+
+  <ToggleGroup.Root size="lg" type="multiple" bind:value={selectedTags}>
+    {#each sampleTags as tag}
+      <ToggleGroup.Item value={tag} aria-label="Toggle {tag}">
+        <div style="display: inline-block; margin: 0 4px; cursor: pointer; background-color: {selectedTags.includes(tag) ? '#007BFF' : 'initial'}; color: {selectedTags.includes(tag) ? 'white' : 'initial'}; padding: 4px 8px; border-radius: 4px;">
+          {tag}
+        </div>
+      </ToggleGroup.Item>
+    {/each}
+  </ToggleGroup.Root>
 </main>
 
 <footer class="bg-gray-800 text-white p-4 text-center">

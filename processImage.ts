@@ -10,6 +10,8 @@ export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// since i cant get the embeddings for the images directly via the api. i just add another prompt for the matching tags and create a second field in the imagemetaschema
+
 // Define the schema
 export const imageMetaSchema = z.object({
   imgPath: z.string(),
@@ -27,6 +29,33 @@ export const fetchEmbedding = async (text: string): Promise<number[]> => {
   try {
     const response = await openai.embeddings.create({
       model: "text-embedding-ada-002",
+      input: text,
+      encoding_format: "float",
+    });
+
+    if (
+      response &&
+      response.data &&
+      response.data[0] &&
+      response.data[0].embedding
+    ) {
+      return response.data[0].embedding;
+    } else {
+      throw new Error("Invalid response structure");
+    }
+  } catch (error) {
+    throw new Error(`Error fetching embedding for text: ${text}`);
+  }
+};
+
+// fetchEmbeddingUpdated
+// use text-embedding-3-small
+export const fetchEmbeddingUpdated = async (
+  text: string
+): Promise<number[]> => {
+  try {
+    const response = await openai.embeddings.create({
+      model: "text-embedding-3-small", // Updated model
       input: text,
       encoding_format: "float",
     });
