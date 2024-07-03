@@ -12,11 +12,18 @@ import { truncateLog } from "./utils";
 //also just display pdf like image
 export async function copyToDB(absoluteDirectoryPath: string) {
   try {
-    await $`cp ${absoluteDirectoryPath}/* db/media/`;
+    // Copy only .png files to db/media/
+    await $`cp ${absoluteDirectoryPath}/*.png db/media/`;
+
+    // Read the files in the destination directory
     const files = await readdir("db/media/");
-    return files.map((file) => join("db/media/", file)); //todo: tag processed media in DB.
+
+    // Return the list of copied .png files
+    return files
+      .filter((file) => file.endsWith(".png"))
+      .map((file) => join("db/media/", file));
   } catch (error) {
-    throw new Error(truncateLog("Error copying files to DB:" + error));
+    throw new Error(truncateLog("Error copying files to DB: " + error));
   }
 }
 
@@ -26,6 +33,7 @@ export async function postImageDetails(
     tags: string[];
     title: string;
     description: string;
+    matchingTags: string[];
     timeStamp: number;
   }[]
 ) {
@@ -34,10 +42,14 @@ export async function postImageDetails(
   );
 }
 
-export async function folderToDB(absoluteDirectoryPath: string) {
+export async function folderToDB(
+  absoluteDirectoryPath: string,
+  matchingTags: string[]
+) {
+  console.log("folderToDB", absoluteDirectoryPath, matchingTags);
   return await pipe(absoluteDirectoryPath, [
     copyToDB,
-    processImages,
+    (filePaths: string[]) => processImages(filePaths, matchingTags), // Explicitly typed
     postImageDetails,
   ]);
 }

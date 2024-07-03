@@ -14,6 +14,7 @@
     embedding: number[];
     imgPath: string;
     tags: string[];
+    matchingTags: string[];
     title: string;
     description: string;
     timeStamp: number;
@@ -24,7 +25,21 @@
   let metaDataArray: MetaData[] = [];
   let sortedMetaDataArray: MetaData[] = [];
   let isayso: boolean = false;
-  let selectedTags: string[] = [];
+  const sampleTags: string[] = [
+    "screenshot",
+    "passport",
+    "document",
+    "bill",
+    "family",
+    "city",
+    "vacation",
+    "landscape",
+    "pet",
+    "art",
+    "male",
+    "female",
+  ];
+  let selectedTags: string[] = [...sampleTags]; // Initialize with all sample tags selected
 
   // Ensure sortedMetaDataArray is always an array
   $: sortedMetaDataArray = Array.isArray(sortedMetaDataArray) ? sortedMetaDataArray : [];
@@ -33,6 +48,7 @@
       return Array.isArray(data) && data.every(item => 
           'embedding' in item && 
           'imgPath' in item && 
+          'matchingTags' in item && 
           'tags' in item && 
           'title' in item && 
           'description' in item && 
@@ -58,7 +74,7 @@
   }
 
   const handleAddFolder = async (): Promise<void> => {
-      await addFolder(folderPath);
+      await addFolder(folderPath, selectedTags); // Pass selectedTags here
       await loadData();
   };
 
@@ -78,20 +94,7 @@
       }
   };
 
-  const sampleTags: string[] = [
-    "screenshot",
-    "passport",
-    "document",
-    "bill",
-    "family",
-    "city",
-    "vacation",
-    "landscape",
-    "pet",
-    "art",
-    "male",
-    "female",
-  ];
+
 
   // Load data initially
   loadData();
@@ -102,7 +105,7 @@
   <Button class="bg-white text-blue-500 px-4 py-2 rounded" on:click="{() => { isayso = !isayso; }}">
     {isayso ? "Show Images" : "Show TSNE"}
   </Button>
-  <Input class="p-2 rounded border" bind:value="{searchQuery}" type="text" placeholder="Search images..." on:keydown="{(event) => { if (event.key === 'Enter') handleSearch(); }}" />
+  <Input class="p-2 rounded border bg-gray-100" bind:value="{searchQuery}" type="text" placeholder="Search images..." on:keydown="{(event) => { if (event.key === 'Enter') handleSearch(); }}" />
 </header>
 
 <main class="p-4">

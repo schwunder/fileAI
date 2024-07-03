@@ -34,8 +34,8 @@ export async function writeData(absPath, newName, comment, tags) {
     tags,
   });
 }
-export async function addFolder(absPath) {
-  await fetchAPI("/addFolder", "POST", { absPath });
+export async function addFolder(absPath, matchingTags) {
+  await fetchAPI("/addFolder", "POST", { absPath, matchingTags });
 }
 
 export async function getDB() {

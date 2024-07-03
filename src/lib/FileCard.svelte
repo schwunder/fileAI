@@ -12,9 +12,11 @@
       title: string;
       description: string;
       tags: string[];
+      matchingTags: string[];
     };
     export let onImageClick: (imgUrl: string, event: MouseEvent) => void = () => {};
     let selectedTags: string[] = [];
+    let selectedMatchingTags: string[] = [];
     let isChecked: boolean = false;
     const sampleTags = [
     "screenshot",
@@ -48,6 +50,13 @@
       <ToggleGroup type="multiple" bind:value={selectedTags} class="mt-4 w-full">
         {#each metaData.tags as tag}
           <ToggleGroupItem value={tag} class="{selectedTags.includes(tag) ? 'selected' : ''} px-2 py-1 m-1 border rounded">
+            {tag}
+          </ToggleGroupItem>
+        {/each}
+      </ToggleGroup>
+      <ToggleGroup type="multiple" bind:value={selectedMatchingTags} class="mt-4 w-full border-teal-500">
+        {#each metaData.matchingTags as tag}
+          <ToggleGroupItem value={tag} class="{selectedMatchingTags.includes(tag) ? 'selected' : ''} px-2 py-1 m-1 border rounded font-extrabold">
             {tag}
           </ToggleGroupItem>
         {/each}

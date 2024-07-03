@@ -13,6 +13,7 @@ const imageMetaSchema = z.object({
   imgPath: z.string(),
   tags: z.array(z.string()),
   title: z.string(),
+  matchingTags: z.array(z.string()),
   description: z.string(),
   timeStamp: z.number(),
   embedding: z.array(z.number()), // Added embedding field

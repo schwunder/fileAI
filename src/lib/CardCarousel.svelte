@@ -17,6 +17,7 @@
     title: string;
     description: string;
     tags: string[];
+    matchingTags: string[];
   }> = [];
   export let folderPath: string;
 

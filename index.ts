@@ -9,7 +9,11 @@ import cors from "cors";
 import { folderToDB } from "./copyToDB";
 import { truncateLog } from "./utils";
 import { runTsneVisualization } from "./tsne";
-// import { assignTags } from "./processImageCompare";
+import pino from "pino";
+
+const logger = pino({
+  level: process.env.LOG_LEVEL || "info",
+});
 
 const app = express();
 app.use(cors());
@@ -32,8 +36,11 @@ app.get("/db", async (req: Request, res: Response) => {
 
 app.post("/processImage", async (req: Request, res: Response) => {
   try {
-    const { imgPath }: { imgPath: string } = req.body;
-    await processImage(imgPath);
+    const {
+      imgPath,
+      matchingTags,
+    }: { imgPath: string; matchingTags: string[] } = req.body;
+    await processImage(imgPath, matchingTags);
     res.status(200).send({ message: "Image processed" });
   } catch (error) {
     res.status(500).send({
@@ -63,11 +70,17 @@ app.post("/mutateImageData", async (req: Request, res: Response) => {
 });
 
 app.post("/addFolder", async (req: Request, res: Response) => {
+  logger.info("POST /addFolder request received");
   try {
-    const { absPath }: { absPath: string } = req.body;
-    await folderToDB(absPath);
+    const {
+      absPath,
+      matchingTags,
+    }: { absPath: string; matchingTags: string[] } = req.body;
+    logger.info({ absPath, matchingTags }, "Processing addFolder request");
+    await folderToDB(absPath, matchingTags);
     res.status(200).send({ message: "Folder added" });
   } catch (error) {
+    logger.error({ error }, "Error adding Folder");
     res.status(500).send({
       message: `Error adding Folder: 
       ${truncateLog((error as Error).message)}`,
@@ -118,5 +131,5 @@ app.use((req: Request, res: Response) => {
 });
 
 app.listen(3000, () => {
-  console.log("Listening on http://localhost:3000");
+  logger.info("Listening on http://localhost:3000");
 });
